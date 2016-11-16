@@ -22,9 +22,9 @@ include_directories(${Boost_INCLUDE_DIRS})
 ## include header-only libraries stored there and managed by Peru
 include_directories(include)
 
-add_subdirectory(src ${CMAKE_BINARY_DIR}/bin)
-add_subdirectory(test ${CMAKE_BINARY_DIR}/testbin)
-add_subdirectory(bench ${CMAKE_BINARY_DIR}/benchbin)
+add_subdirectory(core ${CMAKE_BINARY_DIR}/core)
+# add_subdirectory(test ${CMAKE_BINARY_DIR}/testbin)
+# add_subdirectory(bench ${CMAKE_BINARY_DIR}/benchbin)
 
 enable_testing ()
 add_test (NAME AllTests COMMAND testrunner)
