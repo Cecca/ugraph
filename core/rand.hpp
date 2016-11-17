@@ -39,6 +39,14 @@ public:
       s[i] = seeder.next();
     }
   }
+
+  std::array<uint64_t, 16> state() const {
+    std::array<uint64_t, 16> to_ret;
+    for (size_t i=0; i<16; ++i) {
+      to_ret[i] = s[i];
+    }
+    return to_ret;
+  }
   
   uint64_t next() {
     const uint64_t s0 = s[p];
@@ -91,3 +99,5 @@ public:
   }
 
 };
+
+

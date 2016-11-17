@@ -9,11 +9,13 @@ set( HEADER_FILES
   prelude.hpp
   rand.hpp
   io.hpp
+  sampler.hpp
 )
 
 set( LIB_FILES
   "${CMAKE_CURRENT_BINARY_DIR}/git_info.cpp"
   io.cpp
+  sampler.cpp
 )
 add_library(ugraph STATIC ${HEADER_FILES} ${LIB_FILES} )
 
