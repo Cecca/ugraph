@@ -101,3 +101,6 @@ public:
 };
 
 
+namespace std {
+  std::ostream & operator<<(std::ostream &os, Xorshift1024star & rnd);
+}

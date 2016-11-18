@@ -7,6 +7,8 @@ configure_file(
 set( HEADER_FILES
   git_info.hpp
   prelude.hpp
+  termcolor.hpp
+  logging.hpp
   rand.hpp
   io.hpp
   sampler.hpp
@@ -15,6 +17,8 @@ set( HEADER_FILES
 set( LIB_FILES
   "${CMAKE_CURRENT_BINARY_DIR}/git_info.cpp"
   io.cpp
+  logging.cpp
+  rand.cpp
   sampler.cpp
 )
 add_library(ugraph STATIC ${HEADER_FILES} ${LIB_FILES} )

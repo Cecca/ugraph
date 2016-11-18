@@ -1,14 +1,22 @@
 #include "sampler.hpp"
+#include "logging.hpp"
+
+namespace std {
+  std::ostream & operator<<(std::ostream &os, CCSamplerThreadState & tstate) {
+    os << "TState(" << tstate.rnd << ")";
+    return os;
+  }
+}
+
 
 void sample(ugraph_t & g,
-            std::vector< bool > & edge_sample,
-            Xorshift1024star & rnd)
+            CCSamplerThreadState & tstate)
 {
   using namespace boost;
   
   BGL_FORALL_EDGES(e, g, ugraph_t) {
     EdgeData & ed = g[e];
-    edge_sample[ed.index] = rnd.next_double() <= ed.probability;
+    tstate.edge_sample[ed.index] = tstate.rnd.next_double() <= ed.probability;
   }
 }
 
@@ -62,13 +70,15 @@ void connected_components(const ugraph_t & graph,
   using namespace boost;
 
   // initialize
+  stack.clear();
   for (size_t i=0; i < components_map.size(); i++) {
     components_map[i] = -1;
   }
   int component_id = 0;
-  ugraph_vertex_t root;
-  while (next_undefined(graph, components_map, root)) {
-    dfs(graph, smpl, components_map, stack, root, component_id++);
+  BGL_FORALL_VERTICES(root, graph, ugraph_t) {
+    if (components_map[root] < 0) {
+      dfs(graph, smpl, components_map, stack, root, component_id++);
+    }
   }
 }
 
@@ -84,19 +94,13 @@ void CCSampler::set_sample_size(ugraph_t & graph, size_t total_samples) {
     // Build a new connected component vector in place
     m_samples.emplace_back(boost::num_vertices(graph), -1);
   }
-
-  auto tid = omp_get_thread_num();
-  stack_t stack;
-  component_vector_t components;
-  edge_sample_t edge_sample;
-
-#pragma omp parallel for default(none) shared(std::cout, graph, start, new_samples) private(stack, edge_sample, tid, components)
+  
+#pragma omp parallel for default(none) shared(graph, start, new_samples)
   for (size_t i=start; i<start+new_samples; ++i) {
-    stack = s_stacks[tid];
-    edge_sample = s_edge_samples[tid];
-    sample(graph, edge_sample, m_rnds[tid]);
-    std::cout << "HERE" << std::endl;
-    components = m_samples[i];
-    connected_components(graph, edge_sample, components, stack);
+    auto tid = omp_get_thread_num();
+    auto & tstate = m_thread_states[tid];
+    sample(graph, tstate);
+    auto & components = m_samples[i];
+    connected_components(graph, tstate.edge_sample, components, tstate.stack);
   }
 }
