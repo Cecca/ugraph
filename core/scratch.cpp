@@ -10,8 +10,9 @@ namespace std {
   {
     std::stringstream ss;
     ss << "Xorshift1024*(0x" << std::uppercase << std::setfill('0') << std::setw(4) << std::hex;
-    for(uint64_t x : rnd.state()) {
-      ss << x;
+    auto state = rnd.state();
+    for(size_t i=0; i<2; i++) {
+      ss << state[i];
     }
     ss << ")";
     os << ss.str();
