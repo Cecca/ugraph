@@ -83,7 +83,7 @@ void connected_components(const ugraph_t & graph,
 }
 
 
-void CCSampler::set_sample_size(const ugraph_t & graph, size_t total_samples) {
+void CCSampler::sample_size(const ugraph_t & graph, size_t total_samples) {
   size_t new_samples = total_samples - m_samples.size();
   if (new_samples <= 0) {
     return;

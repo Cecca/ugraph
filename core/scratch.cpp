@@ -17,7 +17,7 @@ int main(int argc, char**argv) {
   
   CCSampler sampler(graph, 123, omp_threads);
   sampler.log_states();
-  sampler.set_sample_size(graph, 1024);
+  sampler.sample_size(graph, 1024);
   LOG_INFO("==================");
   sampler.log_states();
 

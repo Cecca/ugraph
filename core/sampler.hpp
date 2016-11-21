@@ -64,7 +64,7 @@ public:
   }
 
   // Add samples, if needed
-  void set_sample_size(const ugraph_t & graph, size_t total_samples);
+  void sample_size(const ugraph_t & graph, size_t total_samples);
 
   void log_states() {
     for (auto & tstate : m_thread_states) {
