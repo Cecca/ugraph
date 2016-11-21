@@ -20,6 +20,7 @@ struct CCSamplerThreadState {
   CCSamplerThreadState(const ugraph_t & graph,
                        Xorshift1024star randgen) : stack(stack_t(boost::num_vertices(graph))),
                                                    edge_sample(edge_sample_t(boost::num_edges(graph))),
+                                                   connection_counts(std::vector< size_t >(boost::num_vertices(graph))),
                                                    rnd(randgen)
   {};
   
@@ -29,6 +30,8 @@ struct CCSamplerThreadState {
 
   // Edge samples, one for each thread
   edge_sample_t edge_sample;
+
+  std::vector< size_t > connection_counts;
 
   // Random generators, one for each thread
   Xorshift1024star rnd;

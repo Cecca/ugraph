@@ -104,3 +104,43 @@ void CCSampler::set_sample_size(const ugraph_t & graph, size_t total_samples) {
     connected_components(graph, tstate.edge_sample, components, tstate.stack);
   }
 }
+
+
+void CCSampler::connection_probabilities(const ugraph_t & graph,
+                                         const ugraph_vertex_t from,
+                                         std::vector< probability_t > & probabilities) {
+  const size_t num_samples = m_samples.size();
+  const size_t n = boost::num_vertices(graph);
+
+  // Clear data structures
+  std::fill(probabilities.begin(), probabilities.end(), 0.0);
+  for (auto & tstate : m_thread_states) {
+    std::fill(tstate.connection_counts.begin(), tstate.connection_counts.end(), 0);
+  }
+  
+  // Accumulate, in parallel, the connection counts
+#pragma omp parallel for default(none) shared(graph)
+  for (size_t sample_idx=0; sample_idx < num_samples; sample_idx++) {
+    auto tid = omp_get_thread_num();
+    auto & tstate = m_thread_states[tid];
+    
+    const auto & smpl = m_samples[sample_idx];
+    const int root_cc = smpl[from];
+    for (size_t i=0; i< n; i++) {
+      if (smpl[i] == root_cc) {
+        tstate.connection_counts[i]++;
+      }
+    }
+  }
+
+  // Sum the partial counts together
+  for (auto & tstate : m_thread_states) {
+    for (size_t i=0; i< n; i++) {
+      probabilities[i] += tstate.connection_counts[i];
+    }
+  }
+
+  for (size_t i=0; i< n; i++) {
+    probabilities[i] /= num_samples;
+  }
+}

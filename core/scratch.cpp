@@ -17,7 +17,20 @@ int main(int argc, char**argv) {
   
   CCSampler sampler(graph, 123, omp_threads);
   sampler.log_states();
-  sampler.set_sample_size(graph, 4);
+  sampler.set_sample_size(graph, 1024);
   LOG_INFO("==================");
   sampler.log_states();
+
+  LOG_INFO("Computing connection probabilities");
+  ugraph_vertex_t root = 1278;
+  std::vector< probability_t > probabilities(boost::num_vertices(graph), 0.0);
+
+  sampler.connection_probabilities(graph, root, probabilities);
+
+  for (size_t i=0; i < probabilities.size(); i++) {
+    std::cout << i << ":" << probabilities[i] << " ";
+    if (i!= 0 && i % 10 == 0) {
+      std::cout << std::endl;
+    }
+  }
 }
