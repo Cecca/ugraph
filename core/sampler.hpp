@@ -17,7 +17,7 @@ struct CCSamplerThreadState {
   typedef std::vector< ugraph_vertex_t > stack_t;
   typedef std::vector< bool > edge_sample_t;
 
-  CCSamplerThreadState(ugraph_t & graph,
+  CCSamplerThreadState(const ugraph_t & graph,
                        Xorshift1024star randgen) : stack(stack_t(boost::num_vertices(graph))),
                                                    edge_sample(edge_sample_t(boost::num_edges(graph))),
                                                    rnd(randgen)
@@ -48,7 +48,7 @@ public:
 
   typedef std::vector< int > component_vector_t;
   
-  CCSampler(ugraph_t & graph,
+  CCSampler(const ugraph_t & graph,
             uint64_t seed,
             size_t num_threads)
     : m_samples(std::vector< component_vector_t >()),
@@ -61,13 +61,18 @@ public:
   }
 
   // Add samples, if needed
-  void set_sample_size(ugraph_t & graph, size_t total_samples);
+  void set_sample_size(const ugraph_t & graph, size_t total_samples);
 
   void log_states() {
     for (auto & tstate : m_thread_states) {
       LOG_INFO(tstate);
     }
   }
+
+  // TODO maybe return the number of reliably estimated ones
+  void connection_probabilities(const ugraph_t & graph,
+                                const ugraph_vertex_t from,
+                                std::vector< probability_t > & probabilities);
  
 private:
   std::vector< component_vector_t > m_samples;

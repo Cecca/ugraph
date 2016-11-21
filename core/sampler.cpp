@@ -9,13 +9,13 @@ namespace std {
 }
 
 
-void sample(ugraph_t & g,
+void sample(const ugraph_t & g,
             CCSamplerThreadState & tstate)
 {
   using namespace boost;
   
   BGL_FORALL_EDGES(e, g, ugraph_t) {
-    EdgeData & ed = g[e];
+    const EdgeData & ed = g[e];
     tstate.edge_sample[ed.index] = tstate.rnd.next_double() <= ed.probability;
   }
 }
@@ -83,7 +83,7 @@ void connected_components(const ugraph_t & graph,
 }
 
 
-void CCSampler::set_sample_size(ugraph_t & graph, size_t total_samples) {
+void CCSampler::set_sample_size(const ugraph_t & graph, size_t total_samples) {
   size_t new_samples = total_samples - m_samples.size();
   if (new_samples <= 0) {
     return;
