@@ -12,6 +12,7 @@ set( HEADER_FILES
   rand.hpp
   io.hpp
   sampler.hpp
+  sequential_clustering.hpp
 )
 
 set( LIB_FILES
@@ -20,6 +21,7 @@ set( LIB_FILES
   logging.cpp
   rand.cpp
   sampler.cpp
+  sequential_clustering.cpp
 )
 add_library(ugraph STATIC ${HEADER_FILES} ${LIB_FILES} )
 

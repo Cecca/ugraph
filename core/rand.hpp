@@ -33,6 +33,8 @@ private:
 
 public:
 
+  typedef uint64_t result_type;
+  
   Xorshift1024star(uint64_t seed): p(0) {
     Splitmix64 seeder(seed);
     for (size_t i = 0; i < 16; ++i) {
@@ -46,6 +48,14 @@ public:
       to_ret[i] = s[i];
     }
     return to_ret;
+  }
+
+  uint64_t min() { return std::numeric_limits<uint64_t>::min(); }
+  
+  uint64_t max() { return std::numeric_limits<uint64_t>::max(); }
+  
+  uint64_t operator()() {
+    return next();
   }
   
   uint64_t next() {
