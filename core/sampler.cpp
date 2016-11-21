@@ -82,12 +82,18 @@ void connected_components(const ugraph_t & graph,
   }
 }
 
+void CCSampler::min_probability(const ugraph_t & graph, probability_t prob) {
+  const size_t n_samples = prob_to_samples(prob, m_epsilon, m_delta);
+  sample_size(graph, n_samples);
+  m_min_probability = (prob < m_min_probability)? prob : m_min_probability;
+}
 
 void CCSampler::sample_size(const ugraph_t & graph, size_t total_samples) {
   size_t new_samples = total_samples - m_samples.size();
   if (new_samples <= 0) {
     return;
   }
+  LOG_INFO("Taking " << new_samples << " new samples");
   size_t start = m_samples.size();
 
   for (size_t i=0; i<new_samples; ++i) {
@@ -106,9 +112,9 @@ void CCSampler::sample_size(const ugraph_t & graph, size_t total_samples) {
 }
 
 
-void CCSampler::connection_probabilities(const ugraph_t & graph,
-                                         const ugraph_vertex_t from,
-                                         std::vector< probability_t > & probabilities) {
+size_t CCSampler::connection_probabilities(const ugraph_t & graph,
+                                           const ugraph_vertex_t from,
+                                           std::vector< probability_t > & probabilities) {
   const size_t num_samples = m_samples.size();
   const size_t n = boost::num_vertices(graph);
 
@@ -140,7 +146,13 @@ void CCSampler::connection_probabilities(const ugraph_t & graph,
     }
   }
 
+  size_t cnt = 0;
   for (size_t i=0; i< n; i++) {
     probabilities[i] /= num_samples;
+    if (probabilities[i] >= m_min_probability) {
+      cnt++;
+    }
   }
+
+  return cnt;
 }

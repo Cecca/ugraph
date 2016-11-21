@@ -52,9 +52,15 @@ public:
   typedef std::vector< int > component_vector_t;
   
   CCSampler(const ugraph_t & graph,
+            double epsilon,
+            double delta,
+            std::function<size_t(double, double, double)> prob_to_samples,
             uint64_t seed,
             size_t num_threads)
-    : m_samples(std::vector< component_vector_t >()),
+    : m_epsilon(epsilon),
+      m_delta(delta),
+      prob_to_samples(prob_to_samples),
+      m_samples(std::vector< component_vector_t >()),
       m_thread_states(std::vector< CCSamplerThreadState >()) {
     Xorshift1024star rnd(seed);
     for (size_t i=0; i<num_threads; ++i) {
@@ -62,6 +68,8 @@ public:
       m_thread_states.emplace_back(graph, rnd);
     }
   }
+
+  void min_probability(const ugraph_t & graph, probability_t prob);
 
   // Add samples, if needed
   void sample_size(const ugraph_t & graph, size_t total_samples);
@@ -71,15 +79,23 @@ public:
       LOG_INFO(tstate);
     }
   }
-
-  // TODO maybe return the number of reliably estimated ones
-  void connection_probabilities(const ugraph_t & graph,
-                                const ugraph_vertex_t from,
-                                std::vector< probability_t > & probabilities);
+  
+  size_t connection_probabilities(const ugraph_t & graph,
+                                  const ugraph_vertex_t from,
+                                  std::vector< probability_t > & probabilities);
  
 private:
+
+  const double m_epsilon;
+
+  const double m_delta;
+
+  std::function<size_t(double, double, double)> prob_to_samples;
+
   std::vector< component_vector_t > m_samples;
 
   std::vector< CCSamplerThreadState > m_thread_states;
-  
+
+  // The minimum connection probability that is estimate reliably
+  probability_t m_min_probability = 1.0;
 };
