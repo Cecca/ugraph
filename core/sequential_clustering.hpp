@@ -56,5 +56,4 @@ std::vector< SequentialClusterVertex > sequential_cluster(const ugraph_t & graph
                                                           const size_t k,
                                                           const size_t slack,
                                                           const double rate,
-                                                          const probability_t p_low,
-                                                          Xorshift1024star & rnd);
+                                                          const probability_t p_low);

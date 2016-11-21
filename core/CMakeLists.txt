@@ -32,3 +32,11 @@ target_link_libraries(scratch
   ${Boost_TIMER_LIBRARY}
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY})
+
+add_executable(ugraph-sc sequential.cpp)
+target_link_libraries(ugraph-sc
+  ugraph
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_TIMER_LIBRARY}
+  ${Boost_DATE_TIME_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY})

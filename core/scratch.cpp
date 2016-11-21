@@ -20,7 +20,6 @@ int main(int argc, char**argv) {
   auto omp_threads = omp_get_max_threads();
   LOG_INFO("Running with " << omp_threads << " threads");
 
-  Xorshift1024star rnd(1234);
   CCSampler sampler(graph, 0.1, 0.01, prob_to_samples, 123, omp_threads);
   // sampler.log_states();
   // sampler.min_probability(graph, 0.5);
@@ -43,5 +42,5 @@ int main(int argc, char**argv) {
 
   // LOG_INFO("Of which " << reliably_estimated << " reliably estimated");
 
-  sequential_cluster(graph, sampler, 128, 0, 0.9, 0.001, rnd);
+  sequential_cluster(graph, sampler, 128, 0, 0.9, 0.001);
 }

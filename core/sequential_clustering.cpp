@@ -1,9 +1,7 @@
 #include "sequential_clustering.hpp"
 
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
-                            const std::vector< SequentialClusterVertex > & vinfo,
-                            Xorshift1024star & rnd) {
-  // FIXME make random choices
+                            const std::vector< SequentialClusterVertex > & vinfo) {
   auto n = boost::num_vertices(graph);
   for (ugraph_vertex_t i=0; i<n; i++) {
     if (!vinfo[i].is_covered()) {
@@ -18,8 +16,7 @@ std::vector< SequentialClusterVertex > sequential_cluster(const ugraph_t & graph
                                                           const size_t k,
                                                           const size_t slack,
                                                           const double rate,
-                                                          const probability_t p_low,
-                                                          Xorshift1024star & rnd) {
+                                                          const probability_t p_low) {
   const size_t n = boost::num_vertices(graph);
   std::vector< SequentialClusterVertex > vinfo(n);
   std::vector< probability_t > probabilities(n);
@@ -31,7 +28,7 @@ std::vector< SequentialClusterVertex > sequential_cluster(const ugraph_t & graph
     std::fill(vinfo.begin(), vinfo.end(), SequentialClusterVertex());
     sampler.min_probability(graph, p_curr);
     for (size_t center_cnt = 0; center_cnt < k; center_cnt++) {
-      ugraph_vertex_t center = pick_vertex(graph, vinfo, rnd);
+      ugraph_vertex_t center = pick_vertex(graph, vinfo);
       vinfo[center].make_center(center);
       sampler.connection_probabilities(graph, center, probabilities);
       // Cover the nodes
