@@ -10,6 +10,7 @@ set( HEADER_FILES
   termcolor.hpp
   logging.hpp
   rand.hpp
+  experiment_reporter.hpp
   io.hpp
   sampler.hpp
   sequential_clustering.hpp
