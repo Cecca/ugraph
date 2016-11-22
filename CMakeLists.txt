@@ -12,8 +12,7 @@ find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -Wall -std=c++11")
 
 find_package(Boost REQUIRED
-  COMPONENTS graph timer
-             system filesystem date_time
+  COMPONENTS graph system filesystem date_time
              program_options unit_test_framework)
 
 include_directories(${Boost_INCLUDE_DIRS})
@@ -23,9 +22,3 @@ include_directories(${Boost_INCLUDE_DIRS})
 include_directories(include)
 
 add_subdirectory(core ${CMAKE_BINARY_DIR}/core)
-# add_subdirectory(test ${CMAKE_BINARY_DIR}/testbin)
-# add_subdirectory(bench ${CMAKE_BINARY_DIR}/benchbin)
-
-enable_testing ()
-add_test (NAME AllTests COMMAND testrunner)
-add_test (NAME ReachabilityTest COMMAND reachabilityTest $ENV{HOME}/datasets/rome99.wedges )

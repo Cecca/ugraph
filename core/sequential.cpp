@@ -121,7 +121,14 @@ int main(int argc, char**argv) {
 
   CCSampler sampler(graph, epsilon, delta, prob_to_samples, seed, omp_threads);
 
-  auto clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low);
+  auto start = std::chrono::steady_clock::now();
+  auto clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+  auto end = std::chrono::steady_clock::now();
+  double elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
+
+  exp.append("performance", {{"time", elapsed},});
+  
   add_clustering_info(graph, clustering, exp);
   exp.save();
+  LOG_INFO(elapsed << " ms elapsed.");
 }
