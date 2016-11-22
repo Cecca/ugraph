@@ -24,14 +24,6 @@ class ExperimentReporter {
 public:
   ExperimentReporter() : date(boost::posix_time::second_clock::local_time()) {}
 
-  ExperimentReporter(const std::string &category, const std::string &name)
-      : category(category), name(name),
-        date(boost::posix_time::second_clock::local_time()) {}
-
-  void set_category(const std::string &cat) { category = cat; }
-
-  void set_name(const std::string &a_name) { name = a_name; }
-
   void tag(const std::string &key, const element_value_t &val) {
     tags[key] = val;
   }
@@ -61,9 +53,7 @@ public:
 
   void save(std::ostream &out) {
     nlohmann::json root;
-
-    root["category"] = category;
-    root["name"] = name;
+    
     root["date"] = boost::posix_time::to_iso_extended_string(date);
 
     ToJsonVisitor jvis;
@@ -104,8 +94,6 @@ public:
   }
 
 private:
-  std::string category;
-  std::string name;
   boost::posix_time::ptime date;
   std::map<std::string, element_value_t> tags;
   std::map<std::string, table_t> tables;

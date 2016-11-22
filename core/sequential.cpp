@@ -5,6 +5,7 @@
 #include "logging.hpp"
 #include "git_info.hpp"
 #include "sequential_clustering.hpp"
+#include "experiment_reporter.hpp"
 
 
 boost::program_options::variables_map
@@ -58,6 +59,21 @@ size_t prob_to_samples(probability_t prob, double epsilon, double delta) {
   return 1/(epsilon*epsilon*prob) * log(1/delta);
 }
 
+void add_clustering_info(const ugraph_t & graph,
+                         const std::vector< SequentialClusterVertex > & vinfo,
+                         ExperimentReporter & exp) {
+  size_t n = vinfo.size();
+  for(ugraph_vertex_t v=0; v<n; v++) {
+    ugraph_vertex_t center = vinfo[v].center();
+    exp.append("clustering", {
+        {"id", v},
+          {"center", center},
+            {"label", graph[v].label},
+              {"center label", graph[center].label},
+                {"probability", vinfo[v].probability()}});
+  }
+}
+
 int main(int argc, char**argv) {
   auto args = parse_args(argc, argv);
 
@@ -84,6 +100,19 @@ int main(int argc, char**argv) {
 
   auto omp_threads = omp_get_max_threads();
   LOG_INFO("Running with " << omp_threads << " threads");  
+
+  ExperimentReporter exp;
+  exp.tag("algorithm", "sequential");
+  exp.tag("input", graph_path);
+  exp.tag("epsilon", epsilon);
+  exp.tag("delta", delta);
+  exp.tag("rate", rate);
+  exp.tag("p_low", p_low);
+  exp.tag("seed", seed);
+  exp.tag("k", k);
+  exp.tag("slack", slack);
+  exp.tag("git-revision", g_GIT_SHA1);
+  exp.tag("num-threads", omp_threads);
   
   ugraph_t graph;
   read_edge_list(graph, graph_path);
@@ -92,5 +121,7 @@ int main(int argc, char**argv) {
 
   CCSampler sampler(graph, epsilon, delta, prob_to_samples, seed, omp_threads);
 
-  sequential_cluster(graph, sampler, k, slack, rate, p_low);
+  auto clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low);
+  add_clustering_info(graph, clustering, exp);
+  exp.save();
 }
