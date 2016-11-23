@@ -3,6 +3,7 @@
 #include <boost/graph/properties.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/breadth_first_search.hpp>
+#include <boost/graph/connected_components.hpp>
 #include <boost/graph/iteration_macros.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/mesh_graph_generator.hpp>

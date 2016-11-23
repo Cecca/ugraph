@@ -4,7 +4,6 @@ size_t select_centers(std::vector< ClusterVertex > & vinfo,
                       std::vector< ugraph_vertex_t > & centers,
                       const probability_t prob,
                       Xorshift1024star & rnd) {
-  LOG_INFO("Selecting centers");
   const size_t n = vinfo.size();
   centers.clear();
   size_t cnt = 0;
@@ -15,7 +14,6 @@ size_t select_centers(std::vector< ClusterVertex > & vinfo,
       centers.push_back(v);
     }
   }
-  LOG_INFO("Selected centers");
   return cnt;
 }
 
@@ -24,7 +22,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
                                                           const size_t batch,
                                                           const probability_t p_low,
                                                           Xorshift1024star & rnd,
-                                                          ExperimentReporter & experimentq) {
+                                                          ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
   std::vector< ClusterVertex > vinfo(n); // Vertex information
   std::vector< probability_t > probabilities(n);   // scratch vector for connection probabilities
