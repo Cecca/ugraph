@@ -35,7 +35,6 @@ public:
   }
 
   void cover(ugraph_vertex_t center, probability_t prob) {
-    REQUIRE(!is_covered(), "The node is covered");
     m_center = center;
     m_probability = prob;
   }
