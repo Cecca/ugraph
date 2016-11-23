@@ -12,6 +12,7 @@ set( HEADER_FILES
   rand.hpp
   experiment_reporter.hpp
   io.hpp
+  connected_components.hpp
   sampler.hpp
   cluster_vertex.hpp
   sequential_clustering.hpp
@@ -23,6 +24,7 @@ set( LIB_FILES
   io.cpp
   logging.cpp
   rand.cpp
+  connected_components.cpp
   sampler.cpp
   sequential_clustering.cpp
   concurrent_clustering.cpp
