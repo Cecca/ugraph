@@ -55,9 +55,9 @@ parse_args(int argc, char** argv)
   return vm;
 }
 
-size_t prob_to_samples(probability_t prob, double epsilon, double delta) {
-  return 1/(epsilon*epsilon*prob) * log(1/delta);
-}
+// size_t prob_to_samples(probability_t prob, double epsilon, double delta) {
+//   return 1/(epsilon*epsilon*prob) * log(1/delta);
+// }
 
 void add_clustering_info(const ugraph_t & graph,
                          const std::vector< SequentialClusterVertex > & vinfo,
@@ -119,7 +119,11 @@ int main(int argc, char**argv) {
   LOG_INFO("Loaded graph with " << boost::num_vertices(graph) <<
            " nodes and " << boost::num_edges(graph) << " edges");
 
-  CCSampler sampler(graph, epsilon, delta, prob_to_samples, seed, omp_threads);
+  auto prob_to_samples = [epsilon, delta](double p) {
+    return 1/(epsilon*epsilon*p) * log(1/delta);
+  };
+
+  CCSampler sampler(graph, prob_to_samples, seed, omp_threads);
 
   auto start = std::chrono::steady_clock::now();
   auto clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);

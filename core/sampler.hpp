@@ -52,14 +52,10 @@ public:
   typedef std::vector< int > component_vector_t;
   
   CCSampler(const ugraph_t & graph,
-            double epsilon,
-            double delta,
-            std::function<size_t(double, double, double)> prob_to_samples,
+            std::function<size_t(double)> prob_to_samples,
             uint64_t seed,
             size_t num_threads)
-    : m_epsilon(epsilon),
-      m_delta(delta),
-      prob_to_samples(prob_to_samples),
+    : prob_to_samples(prob_to_samples),
       m_samples(std::vector< component_vector_t >()),
       m_thread_states(std::vector< CCSamplerThreadState >()) {
     Xorshift1024star rnd(seed);
@@ -86,11 +82,7 @@ public:
  
 private:
 
-  const double m_epsilon;
-
-  const double m_delta;
-
-  std::function<size_t(double, double, double)> prob_to_samples;
+  std::function<size_t(double)> prob_to_samples;
 
   std::vector< component_vector_t > m_samples;
 
@@ -98,4 +90,5 @@ private:
 
   // The minimum connection probability that is estimate reliably
   probability_t m_min_probability = 1.0;
+  
 };
