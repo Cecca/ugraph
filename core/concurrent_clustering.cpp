@@ -1,6 +1,6 @@
 #include "concurrent_clustering.hpp"
 
-size_t select_centers(std::vector< ConcurrentClusterVertex > & vinfo,
+size_t select_centers(std::vector< ClusterVertex > & vinfo,
                       std::vector< ugraph_vertex_t > & centers,
                       const probability_t prob,
                       Xorshift1024star & rnd) {
@@ -19,14 +19,14 @@ size_t select_centers(std::vector< ConcurrentClusterVertex > & vinfo,
   return cnt;
 }
 
-std::vector< ConcurrentClusterVertex > concurrent_cluster(const ugraph_t & graph,
+std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
                                                           CCSampler & sampler,
                                                           const size_t batch,
                                                           const probability_t p_low,
                                                           Xorshift1024star & rnd,
-                                                          ExperimentReporter & experiment) {
+                                                          ExperimentReporter & experimentq) {
   const size_t n = boost::num_vertices(graph);
-  std::vector< ConcurrentClusterVertex > vinfo(n); // Vertex information
+  std::vector< ClusterVertex > vinfo(n); // Vertex information
   std::vector< probability_t > probabilities(n);   // scratch vector for connection probabilities
   std::vector< ugraph_vertex_t > active_centers;   // scratch vector for IDs of active centers
   active_centers.reserve(2*batch);

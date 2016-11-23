@@ -13,6 +13,7 @@ set( HEADER_FILES
   experiment_reporter.hpp
   io.hpp
   sampler.hpp
+  cluster_vertex.hpp
   sequential_clustering.hpp
   concurrent_clustering.hpp
 )

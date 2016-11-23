@@ -55,22 +55,17 @@ parse_args(int argc, char** argv)
   return vm;
 }
 
-// size_t prob_to_samples(probability_t prob, double epsilon, double delta) {
-//   return 1/(epsilon*epsilon*prob) * log(1/delta);
-// }
-
-void add_clustering_info(const ugraph_t & graph,
-                         const std::vector< SequentialClusterVertex > & vinfo,
-                         ExperimentReporter & exp) {
+void add_clustering_info(const ugraph_t &graph,
+                         const std::vector<ClusterVertex> &vinfo,
+                         ExperimentReporter &exp) {
   size_t n = vinfo.size();
-  for(ugraph_vertex_t v=0; v<n; v++) {
+  for (ugraph_vertex_t v = 0; v < n; v++) {
     ugraph_vertex_t center = vinfo[v].center();
-    exp.append("clustering", {
-        {"id", v},
-          {"center", center},
-            {"label", graph[v].label},
-              {"center label", graph[center].label},
-                {"probability", vinfo[v].probability()}});
+    exp.append("clustering", {{"id", v},
+                              {"center", center},
+                              {"label", graph[v].label},
+                              {"center label", graph[center].label},
+                              {"probability", vinfo[v].probability()}});
   }
 }
 

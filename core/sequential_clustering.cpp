@@ -1,6 +1,6 @@
 #include "sequential_clustering.hpp"
 
-size_t count_uncovered(const std::vector< SequentialClusterVertex > & vinfo) {
+size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
   size_t cnt = 0;
   for (const auto & v : vinfo) {
     if (!v.is_covered()) {
@@ -11,7 +11,7 @@ size_t count_uncovered(const std::vector< SequentialClusterVertex > & vinfo) {
 }
 
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
-                            const std::vector< SequentialClusterVertex > & vinfo) {
+                            const std::vector< ClusterVertex > & vinfo) {
   auto n = boost::num_vertices(graph);
   for (ugraph_vertex_t i=0; i<n; i++) {
     if (!vinfo[i].is_covered()) {
@@ -21,7 +21,7 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
   throw std::logic_error("No uncovered node to select");
 }
 
-std::vector< SequentialClusterVertex > sequential_cluster(const ugraph_t & graph,
+std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
                                                           CCSampler & sampler,
                                                           const size_t k,
                                                           const size_t slack,
@@ -29,14 +29,14 @@ std::vector< SequentialClusterVertex > sequential_cluster(const ugraph_t & graph
                                                           const probability_t p_low,
                                                           ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
-  std::vector< SequentialClusterVertex > vinfo(n);
+  std::vector< ClusterVertex > vinfo(n);
   std::vector< probability_t > probabilities(n);
   probability_t p_curr = 1.0;
   size_t uncovered = n;
 
   while (p_curr > p_low) {
     LOG_INFO("Build clustering with p_curr=" << p_curr);
-    std::fill(vinfo.begin(), vinfo.end(), SequentialClusterVertex());
+    std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
     uncovered = n;
     sampler.min_probability(graph, p_curr);
 

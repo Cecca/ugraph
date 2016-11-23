@@ -51,7 +51,7 @@ parse_args(int argc, char** argv)
 }
 
 void add_clustering_info(const ugraph_t &graph,
-                         const std::vector<ConcurrentClusterVertex> &vinfo,
+                         const std::vector<ClusterVertex> &vinfo,
                          ExperimentReporter &exp) {
   size_t n = vinfo.size();
   for (ugraph_vertex_t v = 0; v < n; v++) {
