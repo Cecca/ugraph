@@ -1,36 +1,103 @@
 #include "concurrent_clustering.hpp"
 
-size_t select_centers(std::vector< ClusterVertex > & vinfo,
-                      std::vector< ugraph_vertex_t > & centers,
-                      const probability_t prob,
-                      Xorshift1024star & rnd) {
-  const size_t n = vinfo.size();
-  centers.clear();
-  size_t cnt = 0;
-  for (size_t v=0; v<n; v++) {
-    if (!vinfo[v].is_covered() && rnd.next_double() <= prob) {
-      cnt++;
-      vinfo[v].make_center(v);
-      centers.push_back(v);
+void mark_reachable(const ugraph_t & graph,
+                    const ugraph_vertex_t root,
+                    std::vector< bool > & flags,
+                    std::vector< ugraph_vertex_t > stack) {
+  using namespace boost;
+  stack.clear();
+  stack.push_back(root);
+  flags[root] = true;
+  while(!stack.empty()) {
+    ugraph_vertex_t v = stack.back();
+    stack.pop_back();
+    BGL_FORALL_OUTEDGES(v, e, graph, ugraph_t) {
+      ugraph_vertex_t u = target(e, graph);
+      if (!flags[u]) {
+        flags[u] = true;
+        // Enqueue u only if it is not already marked, otherwise we
+        // already know the nodes reachable from there from a previous visit.
+        stack.push_back(u);
+      }
     }
   }
-  return cnt;
+}
+
+/**
+ * Select centers according to the given probability. The selection
+ * proceeds iteratively, until the selected batch of centers can reach
+ * the target number of nodes.
+ */
+size_t select_centers(const ugraph_t & graph,
+                      std::vector< ClusterVertex > & vinfo,
+                      std::vector< ugraph_vertex_t > & centers,
+                      const probability_t prob,
+                      const size_t target,
+                      Xorshift1024star & rnd,
+                      std::vector< bool > & flags,
+                      std::vector< ugraph_vertex_t > & stack) {
+  const size_t n = vinfo.size();
+  size_t tentative = 0;
+  const size_t max_tentatives = 128;
+  size_t reachable = 0;
+
+  while (reachable < target) {
+    if (tentative > 0) {
+      LOG_WARN("Could reach only " << reachable << "/"
+               << target << " nodes from the selected centers, doing tentative "
+               << tentative << "/" << max_tentatives);
+    }
+    if (tentative >= max_tentatives) {
+      throw std::logic_error("Exceeded maximum center selection tentatives");
+    }
+    centers.clear();
+    reachable = 0;
+    std::fill(flags.begin(), flags.end(), false);
+    for (size_t v=0; v<n; v++) {
+      if (!vinfo[v].is_covered() && rnd.next_double() <= prob) {
+        centers.push_back(v);
+      }
+    }
+    for (auto c : centers) {
+      mark_reachable(graph, c, flags, stack);
+    }
+    for(size_t i = 0; i<n; i++) {
+      if(flags[i] && !vinfo[i].is_covered()) {
+        reachable++;
+      }
+    }
+    LOG_INFO("There are " << reachable << " nodes reachable from " << centers.size() << " centers");
+    tentative++;
+  }
+
+  for (auto c : centers) {
+    vinfo[c].make_center(c);
+  }
+  return centers.size();
 }
 
 std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
-                                                          CCSampler & sampler,
-                                                          const size_t batch,
-                                                          const probability_t p_low,
-                                                          Xorshift1024star & rnd,
-                                                          ExperimentReporter & experiment) {
+                                                CCSampler & sampler,
+                                                const size_t batch,
+                                                const probability_t p_low,
+                                                Xorshift1024star & rnd,
+                                                ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
+
+  // ----------------------------------
+  // Data structures initialization
+  
   std::vector< ClusterVertex > vinfo(n); // Vertex information
   std::vector< probability_t > probabilities(n);   // scratch vector for connection probabilities
   std::vector< ugraph_vertex_t > active_centers;   // scratch vector for IDs of active centers
   active_centers.reserve(2*batch);
   std::vector< bool > potential_cover_flags(n); // vector of flags to count the number of distinct nodes that can be covered
+  std::vector< ugraph_vertex_t > stack(n);
   std::vector< std::pair< probability_t, std::pair< ugraph_vertex_t, ugraph_vertex_t > > >
     probabilities_pq; // priority queue of center--node by decreasing probability: (probability, (center, node))
+
+  // ----------------------------------
+  // Algorithm
   
   probability_t p_curr = 1.0;   // current probability threshold
   size_t uncovered = n;         // Count of uncovered nodes
@@ -38,7 +105,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
   while(uncovered > 0) {
     probability_t selection_prob = ((double) batch) / uncovered;
     LOG_INFO("Selecting centers with probability " << selection_prob);
-    size_t num_selected = select_centers(vinfo, active_centers, selection_prob, rnd);
+    size_t num_selected = select_centers(graph, vinfo, active_centers, selection_prob, uncovered/2, rnd, potential_cover_flags, stack);
     uncovered -= num_selected;
     LOG_INFO("Still " << uncovered << "/" << n << " nodes after center selection (" << num_selected << " selected)");
     if (uncovered == 0) { break; } // early exit if all the uncovered nodes are turned into centers
@@ -70,6 +137,9 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
                          << " needed, p_curr=" << p_curr << ", p_max=" << max_p
                          << ")");
         p_curr = p_curr / 2;
+        if (p_curr <= p_low) {
+          throw std::logic_error("Could not find a clustering high enough connection probabilities");
+        }
       }
     }
     
