@@ -38,14 +38,15 @@ size_t select_centers(const ugraph_t & graph,
                       std::vector< ugraph_vertex_t > & stack) {
   const size_t n = vinfo.size();
   size_t tentative = 0;
-  const size_t max_tentatives = 128;
+  const size_t max_tentatives = 1024;
   size_t reachable = 0;
 
   while (reachable < target) {
     if (tentative > 0) {
-      LOG_WARN("Could reach only " << reachable << "/"
-               << target << " nodes from the selected centers, doing tentative "
-               << tentative << "/" << max_tentatives);
+      LOG_WARN("Could reach only " << reachable << "/" << target
+                                   << " nodes from the " << centers.size()
+                                   << " selected centers, doing tentative "
+                                   << tentative << "/" << max_tentatives);
     }
     if (tentative >= max_tentatives) {
       throw std::logic_error("Exceeded maximum center selection tentatives");
@@ -66,7 +67,6 @@ size_t select_centers(const ugraph_t & graph,
         reachable++;
       }
     }
-    LOG_INFO("There are " << reachable << " nodes reachable from " << centers.size() << " centers");
     tentative++;
   }
 
@@ -128,7 +128,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
           }
         }
       }
-      size_t count_usable = 0;
+      size_t count_usable = num_selected;
       for(bool f : potential_cover_flags) { if(f) count_usable++; }
       if (count_usable >= uncovered / 2) {
         break;
@@ -144,7 +144,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
     }
     
     std::make_heap(probabilities_pq.begin(), probabilities_pq.end());
-    size_t covered=0;
+    size_t covered=num_selected;
     while (covered<uncovered/2) {
       assert(!probabilities_pq.empty());
       std::pop_heap(probabilities_pq.begin(), probabilities_pq.end());
