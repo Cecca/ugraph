@@ -48,21 +48,6 @@ void dfs(const ugraph_t & graph,
   }
 }
 
-
-bool next_undefined(const ugraph_t & graph,
-                    const std::vector< int > & components_map,
-                    ugraph_vertex_t & out) {
-  using namespace boost;
-  
-  BGL_FORALL_VERTICES(v, graph, ugraph_t) {
-    if (components_map[v] < 0) {
-      out = v;
-      return true;
-    }
-  }
-  return false;
-}
-
 void connected_components(const ugraph_t & graph,
                           const std::vector< bool > & smpl,
                           std::vector< int > & components_map,
