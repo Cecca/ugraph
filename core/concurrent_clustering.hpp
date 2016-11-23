@@ -5,11 +5,13 @@
 #include "sampler.hpp"
 #include "experiment_reporter.hpp"
 
+// FIXME Unify with the class SequentialClusterVertex: we don'e need
+// the distinction, since there is no need for the m_is_active field.
 class ConcurrentClusterVertex {
 
 public:
 
-  ConcurrentClusterVertex(): m_center(0), m_is_center(false), m_probability(-1.0), m_is_active(true) {};
+  ConcurrentClusterVertex(): m_center(0), m_is_center(false), m_probability(-1.0) {};
 
   bool is_covered() const {
     return m_probability > 0.0;
@@ -22,14 +24,6 @@ public:
 
   bool is_center() const {
     return m_is_center;
-  }
-
-  bool is_active() const {
-    return m_is_active;
-  }
-
-  bool deactivate() {
-    m_is_active = false;
   }
 
   probability_t probability() const {
@@ -45,6 +39,7 @@ public:
   }
 
   void cover(ugraph_vertex_t center, probability_t prob) {
+    REQUIRE(!is_covered(), "The node is covered");
     m_center = center;
     m_probability = prob;
   }
@@ -57,8 +52,6 @@ private:
 
   probability_t m_probability;
 
-  bool m_is_active;
-  
 };
 
 std::vector< ConcurrentClusterVertex > concurrent_cluster(const ugraph_t & graph,
