@@ -1,10 +1,34 @@
-#include "sampler.hpp"
-#include "cluster_vertex.hpp"
+#include "scores.hpp"
 
-probability_t min_probability(const ugraph_t & graph,
-                              const std::vector< std::vector<ugraph_vertex_t> > & clusters,
-                              CCSampler & sampler) {
+std::vector< ClusterVertex > build_cluster_vertices(const ugraph_t & graph,
+                                                    const std::unordered_map< ugraph_vertex_t, std::vector<ugraph_vertex_t> > & clusters,
+                                                    CCSampler & sampler) {
+  std::vector< probability_t > probabilities(boost::num_vertices(graph), 0.0);
+  std::vector< ClusterVertex > vinfo(boost::num_vertices(graph));
+
+  for (const auto & entry : clusters) {
+    const ugraph_vertex_t center = entry.first;
+    const auto & cluster = entry.second;
+    sampler.connection_probabilities(graph, center, probabilities);
+    for(const ugraph_vertex_t v : cluster) {
+      if (v == center) {
+        vinfo[v].make_center(v);
+      } else {
+        vinfo[v].cover(center, probabilities[v]);
+      }
+    }
+  }
   
+  return vinfo;
+}
+
+probability_t min_probability(const std::vector< ClusterVertex > & vinfo) {
+  probability_t min_p = 1.0;
+  for (const auto & v : vinfo) {
+    probability_t p = v.probability();
+    min_p = std::min(min_p, p);
+  }
+  return min_p;
 }
 
 double average_cluster_reliability(const ugraph_t & graph,
@@ -13,7 +37,7 @@ double average_cluster_reliability(const ugraph_t & graph,
 
   double sum = 0.0;
   // The denominator is the sum of the sizes of all the clusters. In
-  // cas of overlapping clusterings, it may be greater than the number
+  // case of overlapping clusterings, it may be greater than the number
   // of nodes in the graph.
   size_t denominator = 0;
   for(const auto & cluster : clusters) {
@@ -40,7 +64,9 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
       for (ugraph_vertex_t u : cluster) {
         sampler.connection_probabilities(graph, u, probabilities);
         for (ugraph_vertex_t v : cluster) {
-          numerator += probabilities[v];
+          if (u <= v) {
+            numerator += probabilities[v];
+          }
         }
       }
     }
@@ -48,7 +74,35 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
     denominator += size*(size-1);
   }
   
-  double avpr = numerator / denominator;
+  double avpr = (2*numerator) / denominator;
   REQUIRE(avpr <= 1.0, "AVPR score greater than one!");
   return avpr;
+}
+
+void add_scores(const ugraph_t & graph,
+                const std::vector< ClusterVertex > & vinfo,
+                CCSampler & sampler,
+                ExperimentReporter & experiment) {
+  const size_t n = vinfo.size();
+  std::map< ugraph_vertex_t, std::vector< ugraph_vertex_t > > clusters_map;
+  for (ugraph_vertex_t v=0; v<n; v++) {
+    clusters_map[vinfo[v].center()].push_back(v);
+  }
+  std::vector< std::vector< ugraph_vertex_t > > clusters;
+  for (const auto & entry : clusters_map) {
+    clusters.push_back(entry.second);
+  }
+
+  LOG_INFO("Computing minimum probability");
+  probability_t min_p = min_probability(vinfo);
+  LOG_INFO("Computing ACR");
+  double acr = average_cluster_reliability(graph, clusters, sampler);
+  LOG_INFO("Computing AVPR");
+  double avpr = average_vertex_pairwise_reliability(graph, clusters, sampler);
+
+  LOG_INFO("Clustering with:" <<
+           "\n  p_min = " << min_p <<
+           "\n  avpr  = " << avpr <<
+           "\n  acr   = " << acr);
+  experiment.append("scores", {{"acr", acr}, {"p_min", min_p}, {"avpr", avpr}});
 }

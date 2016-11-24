@@ -6,6 +6,7 @@
 #include "git_info.hpp"
 #include "concurrent_clustering.hpp"
 #include "experiment_reporter.hpp"
+#include "scores.hpp"
 
 boost::program_options::variables_map
 parse_args(int argc, char** argv)
@@ -134,6 +135,7 @@ int main(int argc, char**argv) {
   exp.append("performance", {{"time", elapsed},});
   
   add_clustering_info(graph, clustering, exp);
+  add_scores(graph, clustering, sampler, exp);
   exp.save();
   LOG_INFO(elapsed << " ms elapsed.");
 }
