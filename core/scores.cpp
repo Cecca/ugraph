@@ -79,10 +79,8 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
   return avpr;
 }
 
-void add_scores(const ugraph_t & graph,
-                const std::vector< ClusterVertex > & vinfo,
-                CCSampler & sampler,
-                ExperimentReporter & experiment) {
+std::vector< std::vector< ugraph_vertex_t > >
+build_clusters(const std::vector< ClusterVertex > & vinfo) {
   const size_t n = vinfo.size();
   std::map< ugraph_vertex_t, std::vector< ugraph_vertex_t > > clusters_map;
   for (ugraph_vertex_t v=0; v<n; v++) {
@@ -92,7 +90,15 @@ void add_scores(const ugraph_t & graph,
   for (const auto & entry : clusters_map) {
     clusters.push_back(entry.second);
   }
+  return clusters;
+}
 
+void add_scores(const ugraph_t & graph,
+                const std::vector< ClusterVertex > & vinfo,
+                CCSampler & sampler,
+                ExperimentReporter & experiment) {
+  std::vector< std::vector< ugraph_vertex_t > > clusters = build_clusters(vinfo);
+  
   LOG_INFO("Computing minimum probability");
   probability_t min_p = min_probability(vinfo);
   LOG_INFO("Computing ACR");
@@ -101,8 +107,8 @@ void add_scores(const ugraph_t & graph,
   double avpr = average_vertex_pairwise_reliability(graph, clusters, sampler);
 
   LOG_INFO("Clustering with:" <<
-           "\n  p_min = " << min_p <<
-           "\n  avpr  = " << avpr <<
-           "\n  acr   = " << acr);
+           "\n\tp_min = " << min_p <<
+           "\n\tavpr  = " << avpr <<
+           "\n\tacr   = " << acr);
   experiment.append("scores", {{"acr", acr}, {"p_min", min_p}, {"avpr", avpr}});
 }

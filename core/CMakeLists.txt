@@ -52,3 +52,10 @@ target_link_libraries(ugraph-cc
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY})
+
+add_executable(ugraph-scores score_computer.cpp)
+target_link_libraries(ugraph-scores
+  ugraph
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_DATE_TIME_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY})
