@@ -26,6 +26,7 @@ set( LIB_FILES
   rand.cpp
   connected_components.cpp
   sampler.cpp
+  scores.cpp
   sequential_clustering.cpp
   concurrent_clustering.cpp
 )

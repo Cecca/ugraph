@@ -96,3 +96,32 @@ size_t CCSampler::connection_probabilities(const ugraph_t & graph,
 
   return cnt;
 }
+
+probability_t CCSampler::connection_probability(const ugraph_t & graph,
+                                                const std::vector< ugraph_vertex_t > & vertices) {
+  const size_t num_samples = m_samples.size();
+  const size_t n = boost::num_vertices(graph);
+
+  const ugraph_vertex_t vertices_root = vertices[0];
+  
+  size_t count = 0;
+
+  // Accumulate the counts in parallel
+#pragma omp parallel for reduction(+:count) default(none) shared(vertices)
+  for(size_t sample_idx=0; sample_idx<num_samples; ++sample_idx) {
+    const auto & component = m_samples[sample_idx];
+    const int component_id = component[vertices_root];
+    bool connected = true;
+    for(const ugraph_vertex_t v : vertices) {
+      if (component[v] != component_id) {
+        connected = false;
+        break;
+      }
+    }
+    if (connected) {
+      count++;
+    }
+  }
+
+  return count / ((double) num_samples);
+}

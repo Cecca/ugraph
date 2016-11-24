@@ -79,6 +79,10 @@ public:
   size_t connection_probabilities(const ugraph_t & graph,
                                   const ugraph_vertex_t from,
                                   std::vector< probability_t > & probabilities);
+
+  /** The probability that a given set of nodes is connected */
+  probability_t connection_probability(const ugraph_t & graph,
+                                       const std::vector< ugraph_vertex_t > & vertices);
  
 private:
 
