@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import subprocess
 import tempfile
 import os
@@ -7,6 +8,7 @@ import argparse
 import shutil
 import datetime
 import json
+import time
 
 
 def abc_to_matrix(abc_path):
@@ -75,22 +77,39 @@ def build_result(clusters, centers, abc_path, inflation):
     return jobj
 
 
+def check_ugraph_scores():
+    try:
+        subprocess.call(["ugraph-scores", "--help"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+    except:
+        print("Could not find the ugraph-scores executable, is it in your $PATH?")
+        sys.exit(1)
+
+
 def mcl(abc_path, inflation):
+    check_ugraph_scores()
     _abc_path_abs = os.path.abspath(abc_path)
     calldir = os.getcwd()
     workdir = tempfile.mkdtemp()
     os.chdir(workdir)
     print("Working in", os.getcwd())
     mcl_path, tab_path = abc_to_matrix(_abc_path_abs)
+    start = time.monotonic()
     result, limit = run_mcl(mcl_path, inflation)
+    end = time.monotonic()
     clusters = build_clusters(result, tab_path)
     centers = get_centers(limit, tab_path)
     jobj = build_result(clusters, centers, abc_path, inflation)
+    jobj["tables"]["performance"] = [{"time": int(1000*(end - start))}]
     os.chdir(calldir)
     fname = jobj["date"] + ".json"
     with open(fname, "w") as fh:
         json.dump(jobj, fh)
     print("Wrote JSON result to", fname)
+    subprocess.call(["ugraph-scores",
+                     "--graph", abc_path,
+                     "--clustering", fname])
     shutil.rmtree(workdir)
 
 
