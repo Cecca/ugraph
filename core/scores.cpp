@@ -64,7 +64,7 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
       for (ugraph_vertex_t u : cluster) {
         sampler.connection_probabilities(graph, u, probabilities);
         for (ugraph_vertex_t v : cluster) {
-          if (u <= v) {
+          if (u < v) {
             numerator += probabilities[v];
           }
         }
