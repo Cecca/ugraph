@@ -22,6 +22,8 @@ parse_args(int argc, char** argv)
   po::options_description desc("Clustering evaluation");
   desc.add_options()
     ("help", "produce help message")
+    ("debug", "print debug output")
+    ("trace", "print trace output")
     ("epsilon", po::value<double>()->default_value(0.1),
      "tolerated absolute error")
     ("delta", po::value<double>()->default_value(0.01),
@@ -39,6 +41,11 @@ parse_args(int argc, char** argv)
     std::cout << desc << std::endl;
     abort();
   }
+  if (vm.count("trace")) {
+    logging::set_level(logging::Level::Trace);
+  } else if (vm.count("debug")) {
+    logging::set_level(logging::Level::Debug);
+  }
   return vm;
 }
 
@@ -54,11 +61,13 @@ std::vector< ClusterVertex > load_clustering(const ugraph_t & graph,
   input.close();
   auto clustering_table = data["tables"]["clustering"];
   std::unordered_map<ugraph_vertex_t, std::vector<ugraph_vertex_t> > clusters_map;
+  LOG_INFO("Load clustering from file");
   
   for (const auto & row : clustering_table) {
     ugraph_vertex_t
       center = _find_id(graph, row["center label"]),
       vertex = _find_id(graph, row["label"]);
+    LOG_DEBUG("Loading vertex " << vertex << " assigned to " << center);
     if (clusters_map.count(center) == 0) {
       clusters_map[center] = std::vector<ugraph_vertex_t>();
     }
@@ -112,6 +121,7 @@ int main(int argc, char *argv[]) {
   std::string clustering_path = args["clustering"].as<std::string>();
   auto vinfo = load_clustering(graph, clustering_path, sampler);
   auto clusters = build_clusters(vinfo);
+  LOG_DEBUG("Built clusters");
 
   LOG_INFO("Computing minimum probability");
   probability_t min_p = min_probability(vinfo);

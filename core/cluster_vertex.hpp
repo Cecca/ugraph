@@ -10,7 +10,7 @@ public:
   ClusterVertex(): m_center(0), m_is_center(false), m_probability(-1.0) {};
 
   bool is_covered() const {
-    return m_probability > 0.0;
+    return m_probability >= 0.0;
   }
 
   ugraph_vertex_t center() const {
