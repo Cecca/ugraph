@@ -14,6 +14,7 @@ set( HEADER_FILES
   io.hpp
   connected_components.hpp
   cc_sampler.hpp
+  bfs_sampler.hpp
   cluster_vertex.hpp
   sequential_clustering.hpp
   concurrent_clustering.hpp
@@ -26,6 +27,7 @@ set( LIB_FILES
   rand.cpp
   connected_components.cpp
   cc_sampler.cpp
+  bfs_sampler.cpp
   scores.cpp
   sequential_clustering.cpp
   concurrent_clustering.cpp
