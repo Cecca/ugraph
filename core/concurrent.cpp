@@ -28,7 +28,7 @@ parse_args(int argc, char** argv)
     ("depth", po::value<size_t>(), "BFS depth")
     ("epsilon", po::value<double>()->default_value(0.1),
      "tolerated absolute error")
-    ("delta", po::value<double>(),
+    ("delta", po::value<double>()->default_value(0.01),
      "error probability")
     ("seed", po::value<uint64_t>(),
      "seed for random generator");
