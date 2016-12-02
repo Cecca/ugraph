@@ -29,8 +29,6 @@ set( LIB_FILES
   cc_sampler.cpp
   bfs_sampler.cpp
   scores.cpp
-  sequential_clustering.cpp
-  concurrent_clustering.cpp
 )
 add_library(ugraph STATIC ${HEADER_FILES} ${LIB_FILES} )
 
