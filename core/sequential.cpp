@@ -1,7 +1,7 @@
 #include "prelude.hpp"
 #include "rand.hpp"
 #include "io.hpp"
-#include "sampler.hpp"
+#include "cc_sampler.hpp"
 #include "logging.hpp"
 #include "git_info.hpp"
 #include "sequential_clustering.hpp"

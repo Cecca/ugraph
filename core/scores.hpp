@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sampler.hpp"
+#include "cc_sampler.hpp"
 #include "cluster_vertex.hpp"
 #include "experiment_reporter.hpp"
 

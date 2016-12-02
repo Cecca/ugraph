@@ -2,7 +2,7 @@
 
 #include "types.hpp"
 #include "require.hpp"
-#include "sampler.hpp"
+#include "cc_sampler.hpp"
 #include "experiment_reporter.hpp"
 #include "cluster_vertex.hpp"
 

@@ -13,7 +13,7 @@ set( HEADER_FILES
   experiment_reporter.hpp
   io.hpp
   connected_components.hpp
-  sampler.hpp
+  cc_sampler.hpp
   cluster_vertex.hpp
   sequential_clustering.hpp
   concurrent_clustering.hpp
@@ -25,7 +25,7 @@ set( LIB_FILES
   logging.cpp
   rand.cpp
   connected_components.cpp
-  sampler.cpp
+  cc_sampler.cpp
   scores.cpp
   sequential_clustering.cpp
   concurrent_clustering.cpp

@@ -22,12 +22,12 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
 }
 
 std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
-                                                          CCSampler & sampler,
-                                                          const size_t k,
-                                                          const size_t slack,
-                                                          const double rate,
-                                                          const probability_t p_low,
-                                                          ExperimentReporter & experiment) {
+                                                CCSampler & sampler,
+                                                const size_t k,
+                                                const size_t slack,
+                                                const double rate,
+                                                const probability_t p_low,
+                                                ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
   std::vector< ClusterVertex > vinfo(n);
   std::vector< probability_t > probabilities(n);

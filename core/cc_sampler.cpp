@@ -1,4 +1,4 @@
-#include "sampler.hpp"
+#include "cc_sampler.hpp"
 #include "logging.hpp"
 #include "connected_components.hpp"
 

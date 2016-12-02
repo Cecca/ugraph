@@ -2,10 +2,6 @@
 
 // Code in this header is responsible of handling progressive
 // sampling, so to answer queries on connection probabilities.
-//
-// The code is parametric in the representation of samples:
-//  - connected components
-//  - edge flags
 
 #include "prelude.hpp"
 #include "types.hpp"
@@ -17,14 +13,12 @@ struct CCSamplerThreadState {
   typedef std::vector< ugraph_vertex_t > stack_t;
   typedef std::vector< bool > edge_sample_t;
 
-  CCSamplerThreadState(const ugraph_t & graph,
-                       Xorshift1024star randgen) : stack(stack_t(boost::num_vertices(graph))),
-                                                   edge_sample(edge_sample_t(boost::num_edges(graph))),
-                                                   connection_counts(std::vector< size_t >(boost::num_vertices(graph))),
-                                                   rnd(randgen)
-  {};
-  
-  
+  CCSamplerThreadState(const ugraph_t &graph, Xorshift1024star randgen)
+      : stack(stack_t(boost::num_vertices(graph))),
+        edge_sample(edge_sample_t(boost::num_edges(graph))),
+        connection_counts(std::vector<size_t>(boost::num_vertices(graph))),
+        rnd(randgen){};
+
   // Stacks for dfs, one for each thread
   stack_t stack;
 
