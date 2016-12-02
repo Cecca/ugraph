@@ -120,6 +120,8 @@ void add_scores(const ugraph_t & graph,
   
   LOG_INFO("Computing minimum probability");
   probability_t min_p = min_probability(vinfo);
+  LOG_INFO("Min probability " << min_p);
+  sampler.min_probability(graph, min_p);
   LOG_INFO("Computing ACR");
   double acr = average_cluster_reliability(graph, clusters, sampler);
   LOG_INFO("Computing AVPR");

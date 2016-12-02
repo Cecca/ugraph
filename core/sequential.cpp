@@ -144,6 +144,7 @@ int main(int argc, char**argv) {
   if (args.count("depth") > 0) {
     size_t depth = args["depth"].as<size_t>();
     exp.tag("depth", depth);
+    // Override the sampler, using the limited depth one
     BfsSampler sampler(graph, depth, prob_to_samples, seed, omp_threads);
     clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
   } else {
