@@ -2,6 +2,7 @@
 #include "rand.hpp"
 #include "io.hpp"
 #include "cc_sampler.hpp"
+#include "bfs_sampler.hpp"
 #include "logging.hpp"
 #include "git_info.hpp"
 #include "concurrent_clustering.hpp"
@@ -24,6 +25,7 @@ parse_args(int argc, char** argv)
      "input graph")
     ("batch", po::value<size_t>(),
      "batch size")
+    ("depth", po::value<size_t>(), "BFS depth")
     ("epsilon", po::value<double>()->default_value(0.1),
      "tolerated absolute error")
     ("delta", po::value<double>(),
@@ -127,8 +129,20 @@ int main(int argc, char**argv) {
   Xorshift1024star rnd(seeder.next());
   CCSampler sampler(graph, prob_to_samples, seeder.next(), omp_threads);
 
+  std::vector<ClusterVertex> clustering;
+  
   auto start = std::chrono::steady_clock::now();
-  auto clustering = concurrent_cluster(graph, sampler, batch, p_low, rnd, exp);
+  if (args.count("depth") > 0) {
+    size_t depth = args["depth"].as<size_t>();
+    exp.tag("depth", depth);
+    // Override the sampler, using the limited depth one
+    BfsSampler sampler(graph, depth, prob_to_samples, seed, omp_threads);
+    clustering = concurrent_cluster(graph, sampler, batch, p_low, rnd, exp);
+  } else {
+    exp.tag("depth", std::numeric_limits<double>::infinity());
+    clustering = concurrent_cluster(graph, sampler, batch, p_low, rnd, exp);
+  }
+
   auto end = std::chrono::steady_clock::now();
   double elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
 

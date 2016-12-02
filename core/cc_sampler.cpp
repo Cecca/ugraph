@@ -23,9 +23,7 @@ void sample(const ugraph_t & g,
 
 
 void CCSampler::min_probability(const ugraph_t & graph, probability_t prob) {
-  LOG_INFO("Current sampler p_min " << m_min_probability);
   const size_t n_samples = prob_to_samples(prob);
-  LOG_INFO("prob_to_samples=" << n_samples);
   sample_size(graph, n_samples);
   m_min_probability = (prob < m_min_probability)? prob : m_min_probability;
 }
