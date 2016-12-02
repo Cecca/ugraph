@@ -2,6 +2,7 @@
 #include "rand.hpp"
 #include "io.hpp"
 #include "cc_sampler.hpp"
+#include "bfs_sampler.hpp"
 #include "logging.hpp"
 #include "git_info.hpp"
 #include "sequential_clustering.hpp"
@@ -29,6 +30,7 @@ parse_args(int argc, char** argv)
      "Allow a number `s` of nodes to be singletons clusters")
     ("rate,r", po::value<double>()->default_value(0.5),
      "decrease rate")
+    ("depth", po::value<size_t>(), "BFS depth")
     ("epsilon", po::value<double>()->default_value(0.1),
      "tolerated absolute error")
     ("delta", po::value<double>(),
@@ -134,9 +136,21 @@ int main(int argc, char**argv) {
   };
 
   CCSampler sampler(graph, prob_to_samples, seed, omp_threads);
-
+  
+  std::vector<ClusterVertex> clustering;
+  
   auto start = std::chrono::steady_clock::now();
-  auto clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+  
+  if (args.count("depth") > 0) {
+    size_t depth = args["depth"].as<size_t>();
+    exp.tag("depth", depth);
+    BfsSampler sampler(graph, depth, prob_to_samples, seed, omp_threads);
+    clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+  } else {
+    exp.tag("depth", std::numeric_limits<double>::infinity());
+    clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+  }
+  
   auto end = std::chrono::steady_clock::now();
   double elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
 
