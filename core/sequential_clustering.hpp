@@ -48,8 +48,9 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
     uncovered = n;
     sampler.min_probability(graph, p_curr);
 
-    // Build the clustering
-    for (size_t center_cnt = 0; center_cnt < k; center_cnt++) {
+    // Build the clustering. Start the count from 1 because the
+    // stopping condition is _inside_ the cycle
+    for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
       assert(uncovered == count_uncovered(vinfo));
       ugraph_vertex_t center = pick_vertex(graph, vinfo);
       vinfo[center].make_center(center);
@@ -69,7 +70,6 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
       
       if (center_cnt + uncovered <= k + slack) {
         int used_slack = center_cnt + uncovered - k;
-        LOG_DEBUG("Used slack: " << used_slack);
         // Return the clustering
         for (ugraph_vertex_t i=0; i<n; i++) {
           if (!vinfo[i].is_covered()) {
