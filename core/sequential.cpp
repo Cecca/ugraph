@@ -35,6 +35,8 @@ parse_args(int argc, char** argv)
      "tolerated absolute error")
     ("delta", po::value<double>()->default_value(0.01),
      "error probability")
+    ("theory-samples-fraction", po::value<double>()->default_value(0.1),
+     "Fraction of samples to be used with respect to the theory-defined formula")
     ("seed", po::value<uint64_t>(),
      "seed for random generator");
 
@@ -102,7 +104,8 @@ int main(int argc, char**argv) {
     epsilon = args["epsilon"].as<double>(),
     delta = args["delta"].as<double>(),
     rate = args["rate"].as<double>(),
-    p_low = 0.001;
+    theory_samples_fraction = args["theory-samples-fraction"].as<double>(),
+    p_low = 0.0001;
 
   size_t
     k = args["target"].as<size_t>(),
@@ -131,8 +134,8 @@ int main(int argc, char**argv) {
 
   check_num_components(graph, k);
   
-  auto prob_to_samples = [epsilon, delta](double p) {
-    return 1/(epsilon*epsilon*p) * log(1/delta);
+  auto prob_to_samples = [epsilon, delta, theory_samples_fraction](double p) {
+    return theory_samples_fraction/(epsilon*epsilon*p) * log(1/delta);
   };
 
   CCSampler sampler(graph, prob_to_samples, seed, omp_threads);
