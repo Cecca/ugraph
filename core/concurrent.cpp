@@ -30,6 +30,8 @@ parse_args(int argc, char** argv)
      "tolerated absolute error")
     ("delta", po::value<double>()->default_value(0.01),
      "error probability")
+    ("theory-samples-fraction", po::value<double>()->default_value(0.1),
+     "Fraction of samples to be used with respect to the theory-defined formula")
     ("seed", po::value<uint64_t>(),
      "seed for random generator");
 
@@ -95,7 +97,8 @@ int main(int argc, char**argv) {
   double
     epsilon = args["epsilon"].as<double>(),
     delta = args["delta"].as<double>(),
-    p_low = 0.001;
+    theory_samples_fraction = args["theory-samples-fraction"].as<double>(),
+    p_low = 0.0001;
 
   size_t
     batch = args["batch"].as<size_t>();
@@ -104,7 +107,7 @@ int main(int argc, char**argv) {
   LOG_INFO("Running with " << omp_threads << " threads");  
 
   ExperimentReporter exp;
-  exp.tag("algorithm", "sequential");
+  exp.tag("algorithm", std::string("concurrent"));
   exp.tag("input", graph_path);
   exp.tag("epsilon", epsilon);
   exp.tag("delta", delta);
@@ -112,6 +115,7 @@ int main(int argc, char**argv) {
   exp.tag("seed", seed);
   exp.tag("batch", batch);
   exp.tag("git-revision", g_GIT_SHA1);
+  exp.tag("theory-samples-fraction", theory_samples_fraction);
   exp.tag("num-threads", omp_threads);
   
   ugraph_t graph;
@@ -121,8 +125,8 @@ int main(int argc, char**argv) {
 
   check_num_components(graph, batch);
   
-  auto prob_to_samples = [epsilon, delta](double p) {
-    return 1/(epsilon*epsilon*p) * log(1/delta);
+  auto prob_to_samples = [epsilon, delta, theory_samples_fraction](double p) {
+    return theory_samples_fraction/(epsilon*epsilon*p) * log(1/delta);
   };
 
   Splitmix64 seeder(seed);

@@ -115,7 +115,7 @@ int main(int argc, char**argv) {
   LOG_INFO("Running with " << omp_threads << " threads");  
 
   ExperimentReporter exp;
-  exp.tag("algorithm", "sequential");
+  exp.tag("algorithm", std::string("sequential"));
   exp.tag("input", graph_path);
   exp.tag("epsilon", epsilon);
   exp.tag("delta", delta);
@@ -125,6 +125,7 @@ int main(int argc, char**argv) {
   exp.tag("k", k);
   exp.tag("slack", slack);
   exp.tag("git-revision", g_GIT_SHA1);
+  exp.tag("theory-samples-fraction", theory_samples_fraction);
   exp.tag("num-threads", omp_threads);
   
   ugraph_t graph;
