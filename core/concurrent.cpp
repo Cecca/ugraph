@@ -134,6 +134,7 @@ int main(int argc, char**argv) {
   CCSampler sampler(graph, prob_to_samples, seeder.next(), omp_threads);
 
   std::vector<ClusterVertex> clustering;
+  pairwise_prob_conn_t pmap;
   
   auto start = std::chrono::steady_clock::now();
   if (args.count("depth") > 0) {
@@ -141,15 +142,20 @@ int main(int argc, char**argv) {
     exp.tag("depth", depth);
     // Override the sampler, using the limited depth one
     BfsSampler sampler(graph, depth, prob_to_samples, seed, omp_threads);
-    clustering = concurrent_cluster(graph, sampler, batch, p_low, rnd, exp);
+    clustering = concurrent_cluster(graph, sampler, batch, p_low, rnd, pmap, exp);
   } else {
     exp.tag("depth", std::numeric_limits<double>::infinity());
-    clustering = concurrent_cluster(graph, sampler, batch, p_low, rnd, exp);
+    clustering = concurrent_cluster(graph, sampler, batch, p_low, rnd, pmap, exp);
   }
+
+  LOG_INFO("Pairwise connection probabilities between centers: " << pmap.size());
+  LOG_INFO("Shrinking the clustering");
+  size_t target = batch;
+  shrink_clustering(graph, sampler, target, clustering, pmap);
 
   auto end = std::chrono::steady_clock::now();
   double elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
-
+  
   exp.append("performance", {{"time", elapsed},});
   
   add_clustering_info(graph, clustering, exp);
