@@ -54,6 +54,8 @@ size_t select_centers(const ugraph_t & graph,
   const size_t max_tentatives = 1024;
   size_t reachable = 0;
 
+  centers.clear();
+
   while (reachable < target) {
     if (tentative > 0) {
       LOG_WARN("Could reach only " << reachable << "/" << target
@@ -69,6 +71,7 @@ size_t select_centers(const ugraph_t & graph,
     std::fill(flags.begin(), flags.end(), false);
     for (size_t v=0; v<n; v++) {
       if (!vinfo[v].is_covered() && rnd.next_double() <= prob) {
+        assert(!vinfo[v].is_center());
         centers.push_back(v);
       }
     }
@@ -119,7 +122,9 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
   while(uncovered > 0) {
     probability_t selection_prob = ((double) batch) / uncovered;
     LOG_INFO("Selecting centers with probability " << selection_prob);
-    size_t num_selected = select_centers(graph, vinfo, active_centers, selection_prob, uncovered/2, rnd, potential_cover_flags, stack);
+    size_t num_selected = select_centers(graph, vinfo, active_centers, selection_prob,
+                                         std::max((size_t) 1, uncovered/2), rnd, potential_cover_flags, stack);
+    assert(num_selected <= uncovered);
     uncovered -= num_selected;
     LOG_INFO("Still " << uncovered << "/" << n << " nodes after center selection (" << num_selected << " selected)");
     if (uncovered == 0) { break; } // early exit if all the uncovered nodes are turned into centers
