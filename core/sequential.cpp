@@ -60,12 +60,14 @@ parse_args(int argc, char** argv)
   return vm;
 }
 
-void check_num_components(const ugraph_t & graph, const size_t target) {
+void check_num_components(const ugraph_t & graph, const size_t target, const size_t slack) {
   auto component_map = boost::make_vector_property_map<int>(boost::get(boost::vertex_index, graph));
   size_t num_components = boost::connected_components(graph, component_map);
-  if (target < num_components) {
+  if (target + slack < num_components) {
     LOG_ERROR("The target size ("
               << target
+              << " + "
+              << slack
               << ") is smaller than the number of connected components ("
               << num_components << "): the algorithm can't terminate");
     throw std::logic_error("Target size too small");
@@ -133,7 +135,7 @@ int main(int argc, char**argv) {
   LOG_INFO("Loaded graph with " << boost::num_vertices(graph) <<
            " nodes and " << boost::num_edges(graph) << " edges");
 
-  check_num_components(graph, k);
+  check_num_components(graph, k, slack);
   
   auto prob_to_samples = [epsilon, delta, theory_samples_fraction](double p) {
     return theory_samples_fraction/(epsilon*epsilon*p) * log(1/delta);
