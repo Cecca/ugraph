@@ -118,7 +118,6 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
                                                 const size_t batch,
                                                 const probability_t p_low,
                                                 Xorshift1024star & rnd,
-                                                pairwise_prob_conn_t & pmap,
                                                 ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
 
@@ -166,10 +165,6 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
               potential_cover_flags[v] = true;
             }
           }
-          if (v != c && vinfo[v].is_center()) {
-            probability_t p = probabilities[v];
-            if (p >= p_curr) connection_map_put(pmap, c, v, p);
-          }
         }
       }
       size_t count_usable = num_selected;
@@ -210,8 +205,7 @@ template<typename Sampler>
 void shrink_clustering(const ugraph_t & graph,
                        Sampler & sampler,
                        const size_t target,
-                       std::vector< ClusterVertex > & vinfo,
-                       pairwise_prob_conn_t & pmap) {
+                       std::vector< ClusterVertex > & vinfo) {
   const size_t n = boost::num_vertices(graph);
   std::vector < ugraph_vertex_t > centers;
   std::unordered_map< ugraph_vertex_t, ugraph_vertex_t > center_mapping;
