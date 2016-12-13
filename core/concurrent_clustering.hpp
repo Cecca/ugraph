@@ -7,32 +7,6 @@
 #include "cluster_vertex.hpp"
 #include <boost/functional/hash.hpp>
 
-typedef std::unordered_map< std::pair< ugraph_vertex_t, ugraph_vertex_t >, probability_t,
-                            boost::hash< std::pair<ugraph_vertex_t, ugraph_vertex_t> > > pairwise_prob_conn_t;
-
-void connection_map_put(pairwise_prob_conn_t & pmap,
-                        const ugraph_vertex_t u,
-                        const ugraph_vertex_t v,
-                        const probability_t p) {
-  auto key = (u < v)? std::make_pair(u, v) : std::make_pair(v, u);
-  pmap[key] = p;
-}
-
-probability_t connection_map_get(pairwise_prob_conn_t & pmap,
-                                 const ugraph_vertex_t u,
-                                 const ugraph_vertex_t v) {
-  auto key = (u < v)? std::make_pair(u, v) : std::make_pair(v, u);
-  return pmap[key];
-}
-
-bool connection_map_contains(pairwise_prob_conn_t & pmap,
-                             const ugraph_vertex_t u,
-                             const ugraph_vertex_t v) {
-  auto key = (u < v)? std::make_pair(u, v) : std::make_pair(v, u);
-  return pmap.count(key) > 0;
-}
-
-
 void mark_reachable(const ugraph_t & graph,
                     const ugraph_vertex_t root,
                     std::vector< bool > & flags,
