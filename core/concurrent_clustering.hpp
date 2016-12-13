@@ -260,6 +260,11 @@ void shrink_clustering(const ugraph_t & graph,
   std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
 
   for (const auto & center_pair : super_centers) {
+    ugraph_vertex_t c = center_pair.first;
+    vinfo[c].make_center(c);
+  }
+  
+  for (const auto & center_pair : super_centers) {
     const ugraph_vertex_t c = center_pair.first;
     auto & probs = probabilities[super_centers[c]];
     sampler.connection_probabilities(graph, c, probs);
@@ -270,4 +275,8 @@ void shrink_clustering(const ugraph_t & graph,
       }
     }
   }
+
+  size_t cnt=0;
+  for (ugraph_vertex_t v=0; v<n; v++) { if (vinfo[v].is_center()) cnt++; }
+  REQUIRE(cnt==target, "Wrong number of clusters");
 }
