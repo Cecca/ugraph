@@ -106,6 +106,10 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
   std::vector< ugraph_vertex_t > stack(n);
   std::vector< std::pair< probability_t, std::pair< ugraph_vertex_t, ugraph_vertex_t > > >
     probabilities_pq; // priority queue of center--node by decreasing probability: (probability, (center, node))
+  std::vector< ugraph_vertex_t > uncovered_nodes(n);
+  for(ugraph_vertex_t i=0; i<n; i++) {
+    uncovered_nodes[i] = i;
+  }
 
   // ----------------------------------
   // Algorithm
@@ -129,7 +133,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
       probabilities_pq.clear();
       std::fill(potential_cover_flags.begin(), potential_cover_flags.end(), false);
       for(ugraph_vertex_t c : active_centers) {
-        sampler.connection_probabilities(graph, c, probabilities);
+        sampler.connection_probabilities(graph, c, uncovered_nodes, probabilities);
         for(ugraph_vertex_t v=0; v<n; v++) {
           if (!vinfo[v].is_covered()) {
             probability_t p = probabilities[v];
@@ -155,7 +159,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
         }
       }
     }
-    
+
     std::make_heap(probabilities_pq.begin(), probabilities_pq.end());
     size_t covered=num_selected;
     while (covered<uncovered/2) {
@@ -169,6 +173,14 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
         covered++;
       }
     }
+
+    uncovered_nodes.clear();
+    for(ugraph_vertex_t v=0; v<n; v++) {
+      if (!vinfo[v].is_covered()) {
+        uncovered_nodes.push_back(v);
+      }
+    }
+    assert(uncovered_nodes.size() == uncovered);
     LOG_INFO("After covering, still " << uncovered << "/" << n << " uncovered nodes");
   }
   
@@ -215,7 +227,7 @@ void shrink_clustering(const ugraph_t & graph,
         auto & ps = probabilities.at(super_centers[c1]);
         assert(ps.size()==n);
         LOG_DEBUG("Got probabilities");
-        sampler.connection_probabilities(graph, c1, ps);
+        sampler.connection_probabilities(graph, c1, centers, ps);
         LOG_DEBUG("Computed probabilities");
         for (ugraph_vertex_t c2 : centers) {
           if (center_mapping.count(c2) == 0 && ps[c2] >= guess) {
@@ -237,7 +249,8 @@ void shrink_clustering(const ugraph_t & graph,
 
   for (const auto & center_pair : super_centers) {
     const ugraph_vertex_t c = center_pair.first;
-    const auto & probs = probabilities[super_centers[c]];
+    auto & probs = probabilities[super_centers[c]];
+    sampler.connection_probabilities(graph, c, probs);
     for (ugraph_vertex_t v=0; v<n; v++) {
       if (!vinfo[v].is_covered() || (vinfo[v].is_covered() && vinfo[v].probability() < probs[v])) {
         LOG_DEBUG("Cover " << v << " from " << c << " with p=" << probs[v]);

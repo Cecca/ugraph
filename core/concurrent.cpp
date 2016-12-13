@@ -162,7 +162,7 @@ int main(int argc, char**argv) {
   
   auto end = std::chrono::steady_clock::now();
   double shrinking_elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - breakpoint).count();
-  LOG_INFO("Shrinking computed in " << clustering_elapsed << "ms");
+  LOG_INFO("Shrinking computed in " << shrinking_elapsed << "ms");
   double total_elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
   
   exp.append("performance", {{"time", total_elapsed},{"clustering", clustering_elapsed}, {"shrinking", shrinking_elapsed}});

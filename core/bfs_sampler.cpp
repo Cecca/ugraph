@@ -84,6 +84,13 @@ void BfsSampler::sample_size(const ugraph_t & graph, size_t total_samples) {
 
 size_t BfsSampler::connection_probabilities(const ugraph_t & graph,
                                             const ugraph_vertex_t from,
+                                            const std::vector< ugraph_vertex_t > & targets,
+                                            std::vector< probability_t > & probabilities) {
+  return connection_probabilities(graph, from, probabilities);
+}
+
+size_t BfsSampler::connection_probabilities(const ugraph_t & graph,
+                                            const ugraph_vertex_t from,
                                             std::vector< probability_t > & probabilities) {
   const size_t num_samples = m_samples.size();
   const size_t n = boost::num_vertices(graph);
