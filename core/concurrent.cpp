@@ -25,6 +25,8 @@ parse_args(int argc, char** argv)
      "input graph")
     ("batch", po::value<size_t>(),
      "batch size")
+    ("target", po::value<size_t>(),
+     "target size")
     ("depth", po::value<size_t>(), "BFS depth")
     ("epsilon", po::value<double>()->default_value(0.1),
      "tolerated absolute error")
@@ -150,11 +152,14 @@ int main(int argc, char**argv) {
   auto breakpoint = std::chrono::steady_clock::now();
   double clustering_elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(breakpoint - start).count();
   LOG_INFO("Clustering computed in " << clustering_elapsed << "ms");
-  
-  LOG_INFO("Shrinking the clustering");
-  size_t target = batch;
-  shrink_clustering(graph, sampler, target, clustering);
 
+  if (args.count("target") > 0) {
+    LOG_INFO("Shrinking the clustering");
+    size_t target = args["target"].as<size_t>();
+    exp.tag("target", target);
+    shrink_clustering(graph, sampler, target, clustering);
+  }
+  
   auto end = std::chrono::steady_clock::now();
   double shrinking_elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - breakpoint).count();
   LOG_INFO("Shrinking computed in " << clustering_elapsed << "ms");
