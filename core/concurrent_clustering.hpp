@@ -245,6 +245,18 @@ void shrink_clustering(const ugraph_t & graph,
     guess /= 2;
   }
 
+  // Add enough centers to have `target` super centers
+  size_t super_centers_idx = super_centers.size();
+  while (super_centers.size() < target) {
+    for (const auto c : centers) {
+      if (super_centers.count(c) == 0) {
+        super_centers[c] = super_centers_idx++;
+        break;
+      }
+    }
+  }
+
+  REQUIRE(super_centers.size() == target, "# super centers != target");
   std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
 
   for (const auto & center_pair : super_centers) {
