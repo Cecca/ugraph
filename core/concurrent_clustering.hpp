@@ -148,7 +148,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
     assert(num_selected <= uncovered);
     uncovered -= num_selected;
     LOG_INFO("Still " << uncovered << "/" << n << " nodes after center selection (" << num_selected << " selected)");
-    //if (uncovered == 0) { break; } // early exit if all the uncovered nodes are turned into centers
+    if (uncovered == 0) { break; } // early exit if all the uncovered nodes are turned into centers
 
     while (true) { // Termination condition at the end
       probability_t max_p = 0.0;
@@ -167,7 +167,8 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
             }
           }
           if (v != c && vinfo[v].is_center()) {
-            connection_map_put(pmap, c, v, probabilities[v]);
+            probability_t p = probabilities[v];
+            if (p >= p_curr) connection_map_put(pmap, c, v, p);
           }
         }
       }
@@ -212,61 +213,67 @@ void shrink_clustering(const ugraph_t & graph,
                        std::vector< ClusterVertex > & vinfo,
                        pairwise_prob_conn_t & pmap) {
   const size_t n = boost::num_vertices(graph);
+  std::vector < ugraph_vertex_t > centers;
   std::unordered_map< ugraph_vertex_t, ugraph_vertex_t > center_mapping;
-  std::unordered_set< ugraph_vertex_t > super_centers;
+  std::unordered_map< ugraph_vertex_t, size_t > super_centers;
+  std::vector< std::vector< probability_t > > probabilities(target); // Scratch vectors for probabilities
+  for(size_t i=0; i<target; i++) {
+    std::vector<probability_t> vec(n);
+    probabilities[i] = vec;
+  }
   
   probability_t p_alg = 1.0;
   size_t num_clusters = 0;
   for(ugraph_vertex_t v=0; v<n; ++v){
     p_alg = std::min(vinfo[v].probability(), p_alg);
-    if (vinfo[v].is_center()) num_clusters++;
+    if (vinfo[v].is_center()) {
+      num_clusters++;
+      centers.push_back(v);
+    }
   }
 
-  const size_t num_center_pairs = num_clusters*(num_clusters-1)/2;
-  REQUIRE(num_center_pairs == pmap.size(),
-          "Should have all center-center connection probabilities");
-  
-  probability_t guess = std::sqrt(p_alg);
+  LOG_DEBUG("Starting the guessing");
+  probability_t guess = p_alg;
   while(center_mapping.size() < num_clusters) {
-    LOG_INFO("Star covering with guess " << guess <<
-             " (" << center_mapping.size() << "/" << num_clusters << " centers mapped)");
+    LOG_INFO(">>>> guess " << guess);
     sampler.min_probability(graph, guess);
     center_mapping.clear();
     super_centers.clear();
-    for (ugraph_vertex_t u=0; u<n; ++u) {
-      if (vinfo[u].is_center() && center_mapping.count(u)==0) {
-        super_centers.insert(u);
-        for (ugraph_vertex_t v=0; v<n; ++v) {
-          if (vinfo[v].is_center() && center_mapping.count(v)==0) {
-            probability_t p = connection_map_get(pmap, u, v);
-            if (p >= guess) {
-              LOG_DEBUG("Mapping " << v << " to " << u << "(probability " << p << ")");
-              center_mapping[v] = u;
-            }
+    size_t super_center_idx = 0;
+    for(ugraph_vertex_t c1 : centers) {
+      if (center_mapping.count(c1) == 0) {
+        super_centers[c1] = super_center_idx++;
+        LOG_DEBUG("Getting probabilities " << c1 << " (" << super_centers[c1] << ")");
+        auto & ps = probabilities.at(super_centers[c1]);
+        assert(ps.size()==n);
+        LOG_DEBUG("Got probabilities");
+        sampler.connection_probabilities(graph, c1, ps);
+        LOG_DEBUG("Computed probabilities");
+        for (ugraph_vertex_t c2 : centers) {
+          if (center_mapping.count(c2) == 0 && ps[c2] >= guess) {
+            center_mapping[c2] = c1;
+            LOG_DEBUG("Remapped " << c2 << " to " << c1);
           }
         }
       }
+      if (super_center_idx >= target) {
+        break;
+      }
     }
+    LOG_INFO("Center mapping of size " <<
+             center_mapping.size() << "/" << centers.size());
     guess /= 2;
   }
 
-  std::vector< probability_t > probabilities(n);
-  for (auto c : super_centers) {
-    sampler.connection_probabilities(graph, c, probabilities);
-    for (ugraph_vertex_t v=0; v<n; ++v) {
-      ugraph_vertex_t
-        old_center = vinfo[v].center(),
-        new_center = center_mapping[old_center];
-      if (new_center == c) {
-        probability_t
-          p = probabilities[v],
-          old_p = vinfo[v].probability();
-        LOG_DEBUG("Remapping " << v << " from " << old_center <<
-                  " to " << new_center << " with probability " << p <<
-                  " (was connected with p=" << old_p <<
-                  ", and the centers are connected with prob " <<
-                  connection_map_get(pmap, c, v) << "|" << probabilities[old_center] << ")");
-        vinfo[v].cover(new_center, p);
+  std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
+
+  for (const auto & center_pair : super_centers) {
+    const ugraph_vertex_t c = center_pair.first;
+    const auto & probs = probabilities[super_centers[c]];
+    for (ugraph_vertex_t v=0; v<n; v++) {
+      if (!vinfo[v].is_covered() || (vinfo[v].is_covered() && vinfo[v].probability() < probs[v])) {
+        LOG_DEBUG("Cover " << v << " from " << c << " with p=" << probs[v]);
+        vinfo[v].cover(c, probs[v]);
       }
     }
   }
