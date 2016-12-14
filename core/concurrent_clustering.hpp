@@ -242,7 +242,7 @@ void shrink_clustering(const ugraph_t & graph,
     }
     LOG_INFO("Center mapping of size " <<
              center_mapping.size() << "/" << centers.size());
-    guess /= 2;
+    guess *= 0.99;
   }
 
   // Add enough centers to have `target` super centers
