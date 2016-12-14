@@ -116,7 +116,7 @@ int main(int argc, char**argv) {
   exp.tag("p_low", p_low);
   exp.tag("seed", seed);
   exp.tag("batch", batch);
-  exp.tag("git-revision", g_GIT_SHA1);
+  exp.tag("git-revision", std::string(g_GIT_SHA1));
   exp.tag("theory-samples-fraction", theory_samples_fraction);
   exp.tag("num-threads", omp_threads);
   

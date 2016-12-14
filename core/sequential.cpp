@@ -126,7 +126,7 @@ int main(int argc, char**argv) {
   exp.tag("seed", seed);
   exp.tag("k", k);
   exp.tag("slack", slack);
-  exp.tag("git-revision", g_GIT_SHA1);
+  exp.tag("git-revision", std::string(g_GIT_SHA1));
   exp.tag("theory-samples-fraction", theory_samples_fraction);
   exp.tag("num-threads", omp_threads);
   
