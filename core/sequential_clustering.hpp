@@ -39,13 +39,14 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
                                                 ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
   std::vector< ClusterVertex > vinfo(n);
+  std::vector< ClusterVertex > valid_clustering(n);
   std::vector< probability_t > probabilities(n);
   probability_t p_curr = 1.0;
   Guesser guesser(rate, p_low);
   size_t uncovered = n;
   size_t used_slack = 0;
 
-  while (!guesser.stop() || uncovered > 0) {
+  while (!guesser.stop()) {
     LOG_INFO("Build clustering with p_curr=" << p_curr);
     std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
     uncovered = n;
@@ -86,6 +87,10 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
     }
     if (uncovered == 0) {
       guesser.below();
+      // this is a valid clustering, keep track of it
+      for (ugraph_vertex_t i=0; i<n; i++) {
+        valid_clustering[i] = vinfo[i];
+      }
     } else {
       guesser.above();
     }
@@ -98,7 +103,7 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
   if (uncovered == 0) {
     experiment.append("algorithm-info", {{"used-slack", used_slack},
           {"p_curr", p_curr}});
-    return vinfo;
+    return valid_clustering;
   } else {
     throw std::logic_error("Could not find a clustering with high enough probability");
   }
