@@ -100,11 +100,8 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
     p_curr = guesser.guess();
   }
 
-  if (uncovered == 0) {
-    experiment.append("algorithm-info", {{"used-slack", used_slack},
-          {"p_curr", p_curr}});
-    return valid_clustering;
-  } else {
-    throw std::logic_error("Could not find a clustering with high enough probability");
-  }
+  experiment.append("algorithm-info", {{"used-slack", used_slack},
+        {"p_curr", p_curr}});
+  return valid_clustering;
+  
 }
