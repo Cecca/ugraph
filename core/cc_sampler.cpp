@@ -42,6 +42,7 @@ void CCSampler::sample_size(const ugraph_t & graph, size_t total_samples) {
     // Build a new connected component vector in place
     m_samples.emplace_back(boost::num_vertices(graph), -1);
   }
+  LOG_DEBUG("Allocated the new samples");
   
 #pragma omp parallel for default(none) shared(graph, start, new_samples)
   for (size_t i=start; i<start+new_samples; ++i) {

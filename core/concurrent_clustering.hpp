@@ -104,8 +104,10 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
   active_centers.reserve(2*batch);
   std::vector< bool > potential_cover_flags(n); // vector of flags to count the number of distinct nodes that can be covered
   std::vector< ugraph_vertex_t > stack(n);
+  LOG_DEBUG("Trying to allocate space for the priority queue");
   std::vector< std::pair< probability_t, std::pair< ugraph_vertex_t, ugraph_vertex_t > > >
-    probabilities_pq; // priority queue of center--node by decreasing probability: (probability, (center, node))
+    probabilities_pq(batch*n); // priority queue of center--node by decreasing probability: (probability, (center, node))
+  LOG_DEBUG("Allocated space for the priority queue");
   std::vector< ugraph_vertex_t > uncovered_nodes(n);
   for(ugraph_vertex_t i=0; i<n; i++) {
     uncovered_nodes[i] = i;
@@ -128,10 +130,12 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
     if (uncovered == 0) { break; } // early exit if all the uncovered nodes are turned into centers
 
     while (true) { // Termination condition at the end
+      LOG_DEBUG("Start guessing probabilities");
       probability_t max_p = 0.0;
       sampler.min_probability(graph, p_curr);
       probabilities_pq.clear();
       std::fill(potential_cover_flags.begin(), potential_cover_flags.end(), false);
+      LOG_DEBUG("Cleared data structures");
       for(ugraph_vertex_t c : active_centers) {
         sampler.connection_probabilities(graph, c, uncovered_nodes, probabilities);
         for(ugraph_vertex_t v=0; v<n; v++) {
@@ -145,6 +149,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
           }
         }
       }
+      LOG_DEBUG("Inserted nodes in the priority queue");
       size_t count_usable = num_selected;
       for(bool f : potential_cover_flags) { if(f) count_usable++; }
       if (count_usable >= uncovered / 2) {
@@ -160,7 +165,9 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
       }
     }
 
+    LOG_DEBUG("Make heap");
     std::make_heap(probabilities_pq.begin(), probabilities_pq.end());
+    LOG_DEBUG("Made heap");
     size_t covered=num_selected;
     while (covered<uncovered/2) {
       assert(!probabilities_pq.empty());
