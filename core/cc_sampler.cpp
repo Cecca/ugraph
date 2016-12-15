@@ -29,11 +29,13 @@ void CCSampler::min_probability(const ugraph_t & graph, probability_t prob) {
 }
 
 void CCSampler::sample_size(const ugraph_t & graph, size_t total_samples) {
+  m_used_samples = total_samples;
   if (total_samples <= m_samples.size()) {
+    LOG_INFO("Using " << m_used_samples << " (no new samples)");
     return;
   }
   size_t new_samples = total_samples - m_samples.size();
-  LOG_INFO("Taking " << new_samples << " new samples");
+  LOG_INFO("Using " << m_used_samples << " (taking " << new_samples << " new)");
   size_t start = m_samples.size();
 
   for (size_t i=0; i<new_samples; ++i) {
@@ -55,7 +57,7 @@ void CCSampler::sample_size(const ugraph_t & graph, size_t total_samples) {
 size_t CCSampler::connection_probabilities(const ugraph_t & graph,
                                            const ugraph_vertex_t from,
                                            std::vector< probability_t > & probabilities) {
-  const size_t num_samples = m_samples.size();
+  const size_t num_samples = m_used_samples;
   const size_t n = boost::num_vertices(graph);
 
   // Clear data structures
@@ -102,7 +104,6 @@ size_t CCSampler::connection_probabilities(const ugraph_t & graph,
                                            const std::vector< ugraph_vertex_t > & targets,
                                            std::vector< probability_t > & probabilities) {
   const size_t num_samples = m_samples.size();
-  const size_t n = boost::num_vertices(graph);
 
   // Clear data structures
   std::fill(probabilities.begin(), probabilities.end(), 0.0);
@@ -147,7 +148,6 @@ size_t CCSampler::connection_probabilities(const ugraph_t & graph,
 probability_t CCSampler::connection_probability(const ugraph_t & graph,
                                                 const std::vector< ugraph_vertex_t > & vertices) {
   const size_t num_samples = m_samples.size();
-  const size_t n = boost::num_vertices(graph);
 
   const ugraph_vertex_t vertices_root = vertices[0];
   
