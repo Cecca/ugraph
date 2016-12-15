@@ -61,11 +61,13 @@ void BfsSampler::min_probability(const ugraph_t & graph, probability_t prob) {
 
 
 void BfsSampler::sample_size(const ugraph_t & graph, size_t total_samples) {
-  size_t new_samples = total_samples - m_samples.size();
-  if (new_samples <= 0) {
+  m_used_samples = total_samples;
+  if (total_samples <= m_samples.size()) {
+    LOG_INFO("Using " << m_used_samples << " (no new samples)");
     return;
   }
-  LOG_INFO("Taking " << new_samples << " new samples");
+  size_t new_samples = total_samples - m_samples.size();
+  LOG_INFO("Using " << m_used_samples << " (taking " << new_samples << " new)");
   size_t start = m_samples.size();
 
   for (size_t i=0; i<new_samples; ++i) {

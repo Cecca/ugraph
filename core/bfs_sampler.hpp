@@ -83,7 +83,9 @@ public:
       : prob_to_samples(prob_to_samples),
         m_max_dist(max_depth),
         m_samples(std::vector<edge_sample_t>()),
-        m_thread_states(std::vector<BfsSamplerThreadState>()) {
+        m_thread_states(std::vector<BfsSamplerThreadState>()),
+        m_used_samples(0)
+  {
     Xorshift1024star rnd(seed);
     for (size_t i = 0; i < num_threads; ++i) {
       rnd.jump();
@@ -129,4 +131,6 @@ private:
 
   // The minimum connection probability that is estimate reliably
   probability_t m_min_probability = 1.0;
+
+  size_t m_used_samples;
 };
