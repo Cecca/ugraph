@@ -16,6 +16,7 @@ set( HEADER_FILES
   cc_sampler.hpp
   bfs_sampler.hpp
   cluster_vertex.hpp
+  guesser.hpp
   sequential_clustering.hpp
   concurrent_clustering.hpp
 )

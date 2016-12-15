@@ -1,22 +1,25 @@
 #include "prelude.hpp"
-#include "rand.hpp"
-#include "io.hpp"
-#include "bfs_sampler.hpp"
-#include "logging.hpp"
-#include "sequential_clustering.hpp"
+#include "guesser.hpp"
 
 
 int main(int argc, char**argv) {
-  FixedCapacityQueue<int> queue(12);
-  int elems[] = {1,2,3,4,5,6,7,8,9,8};
-  for (int e : elems) {
-    queue.push(e);
+  if (argc < 2) std::exit(1);
+  probability_t target = std::stod(std::string(argv[1]));
+
+  LOG_INFO("Target is " << target);
+  
+  Guesser g(0.01, 0.001);
+
+  probability_t guess;
+  while(!g.stop()) {
+    guess = g.guess();
+    LOG_INFO("" << guess);
+    if (guess <= target) {
+      g.below();
+    } else {
+      g.above();
+    }
   }
-  std::cout << queue.pop() << std::endl;
-  std::cout << queue.pop() << std::endl;
-  queue.push(1001);
-  queue.push(1002);
-  while(!queue.empty()) {
-    std::cout << queue.pop() << std::endl;
-  }
+
+  LOG_INFO(">>> Final guess " << guess);
 }
