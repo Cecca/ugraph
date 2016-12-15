@@ -41,11 +41,13 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
   std::vector< probability_t > probabilities(n);
   probability_t p_curr = 1.0;
   size_t uncovered = n;
+  size_t used_slack = 0;
 
-  while (p_curr > p_low) {
+  while (uncovered > 0 && p_curr > p_low) {
     LOG_INFO("Build clustering with p_curr=" << p_curr);
     std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
     uncovered = n;
+    used_slack = 0;
     sampler.min_probability(graph, p_curr);
 
     // Build the clustering. Start the count from 1 because the
@@ -68,24 +70,29 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
         }
       }
       
-      if (center_cnt + uncovered <= k + slack) {
-        int used_slack = center_cnt + uncovered - k;
-        // Return the clustering
+      if (center_cnt + uncovered <= k + slack) {        
+        // Complete the clustering using the slack and break from the loop.
         for (ugraph_vertex_t i=0; i<n; i++) {
           if (!vinfo[i].is_covered()) {
             vinfo[i].make_center(i);
+            used_slack++;
+            uncovered--;
           }
         }
-        experiment.append("algorithm-info", {{"used-slack", used_slack},
-                                             {"p_curr", p_curr}});
-        return vinfo;
+        break;
       }
     }
-
+    
     LOG_INFO("Still " << uncovered << " nodes to cover");
     // update the probability
     p_curr *= rate;
   }
 
-  throw std::logic_error("p_curr < p_low");
+  if (uncovered == 0) {
+    experiment.append("algorithm-info", {{"used-slack", used_slack},
+          {"p_curr", p_curr}});
+    return vinfo;
+  } else {
+    throw std::logic_error("p_curr < p_low");
+  }
 }
