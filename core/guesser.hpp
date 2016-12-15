@@ -2,6 +2,7 @@
 
 #include "logging.hpp"
 #include "types.hpp"
+#include "require.hpp"
 
 class Guesser {
 
@@ -39,6 +40,7 @@ public:
   }
 
   probability_t guess() {
+    REQUIRE(m_lower <= m_upper, "Upper and lower bounds inverted!");
     if (binary_search) {
       // The last guess is the lower bound, so to have always a
       // probability less than the necessary one

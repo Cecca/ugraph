@@ -6,6 +6,7 @@
 #include "bfs_sampler.hpp"
 #include "experiment_reporter.hpp"
 #include "cluster_vertex.hpp"
+#include "guesser.hpp"
 
 size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
   size_t cnt = 0;
@@ -40,10 +41,11 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
   std::vector< ClusterVertex > vinfo(n);
   std::vector< probability_t > probabilities(n);
   probability_t p_curr = 1.0;
+  Guesser guesser(rate, p_low);
   size_t uncovered = n;
   size_t used_slack = 0;
 
-  while (uncovered > 0 && p_curr > p_low) {
+  while (!guesser.stop() || uncovered > 0) {
     LOG_INFO("Build clustering with p_curr=" << p_curr);
     std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
     uncovered = n;
@@ -82,10 +84,15 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
         break;
       }
     }
+    if (uncovered == 0) {
+      guesser.below();
+    } else {
+      guesser.above();
+    }
     
     LOG_INFO("Still " << uncovered << " nodes to cover");
     // update the probability
-    p_curr *= rate;
+    p_curr = guesser.guess();
   }
 
   if (uncovered == 0) {
@@ -93,6 +100,6 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
           {"p_curr", p_curr}});
     return vinfo;
   } else {
-    throw std::logic_error("p_curr < p_low");
+    throw std::logic_error("Could not find a clustering with high enough probability");
   }
 }
