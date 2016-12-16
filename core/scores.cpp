@@ -11,14 +11,7 @@ std::vector< ClusterVertex > build_cluster_vertices(const ugraph_t & graph,
   for (const auto & entry : clusters) {
     const ugraph_vertex_t center = entry.first;
     auto cluster = entry.second;
-    std::sort(cluster.begin(), cluster.end());
-    LOG_DEBUG("Cluster " << center << " ------------");
-    std::stringstream sstr;
-    for(auto v : cluster) {
-      sstr << v << " ";
-    }
-    LOG_DEBUG("" << sstr.str());
-    sampler.connection_probabilities(graph, center, probabilities);
+    sampler.connection_probabilities(graph, center, cluster, probabilities);
     for(const ugraph_vertex_t v : cluster) {
       if (v == center) {
         vinfo[v].make_center(v);

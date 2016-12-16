@@ -28,6 +28,7 @@ parse_args(int argc, char** argv)
      "tolerated absolute error")
     ("delta", po::value<double>()->default_value(0.01),
      "error probability")
+    ("fast-scores", "compute only p_min")
     ("graph", po::value<std::string>(),
      "file containing graph data")
     ("clustering", po::value<std::string>(),
@@ -125,15 +126,6 @@ int main(int argc, char *argv[]) {
 
   LOG_INFO("Computing minimum probability");
   probability_t min_p = min_probability(vinfo);
-  LOG_INFO("Computing ACR");
-  double acr = average_cluster_reliability(graph, clusters, sampler);
-  LOG_INFO("Computing AVPR");
-  double avpr = average_vertex_pairwise_reliability(graph, clusters, sampler);
-  
-  LOG_INFO("Clustering with:" <<
-           "\n\tp_min = " << min_p <<
-           "\n\tavpr  = " << avpr <<
-           "\n\tacr   = " << acr);
 
   using json = nlohmann::json;
   // add the scores to the json file
@@ -142,8 +134,14 @@ int main(int argc, char *argv[]) {
   input >> data;
   input.close();
   data["tables"]["scores"][0]["p_min"] = min_p;
-  data["tables"]["scores"][0]["acr"] = acr;
-  data["tables"]["scores"][0]["avpr"] = avpr;
+  if (args.count("fast-scores") == 0) {
+    LOG_INFO("Computing ACR");
+    double acr = average_cluster_reliability(graph, clusters, sampler);
+    LOG_INFO("Computing AVPR");
+    double avpr = average_vertex_pairwise_reliability(graph, clusters, sampler);
+    data["tables"]["scores"][0]["acr"] = acr;
+    data["tables"]["scores"][0]["avpr"] = avpr;
+  }
   
   LOG_INFO("Writing the result in place in file " << clustering_path);
   std::ofstream output(clustering_path);
