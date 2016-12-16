@@ -115,12 +115,18 @@ build_clusters(const std::vector< ClusterVertex > & vinfo) {
 void add_scores(const ugraph_t & graph,
                 const std::vector< ClusterVertex > & vinfo,
                 CCSampler & sampler,
+                const bool only_p_min,
                 ExperimentReporter & experiment) {
   std::vector< std::vector< ugraph_vertex_t > > clusters = build_clusters(vinfo);
   
   LOG_INFO("Computing minimum probability");
   probability_t min_p = min_probability(vinfo);
   sampler.min_probability(graph, min_p);
+  if (only_p_min) {
+    LOG_INFO("Clustering with:" << "\n\tp_min = " << min_p);
+    experiment.append("scores", {{"p_min", min_p},});
+    return;
+  }
   LOG_INFO("Computing ACR");
   double acr = average_cluster_reliability(graph, clusters, sampler);
   LOG_INFO("Computing AVPR");

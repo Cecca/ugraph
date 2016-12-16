@@ -35,7 +35,8 @@ parse_args(int argc, char** argv)
     ("theory-samples-fraction", po::value<double>()->default_value(0.1),
      "Fraction of samples to be used with respect to the theory-defined formula")
     ("seed", po::value<uint64_t>(),
-     "seed for random generator");
+     "seed for random generator")
+    ("fast-scores", "compute only fast-to-compute scores");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -169,6 +170,6 @@ int main(int argc, char**argv) {
   LOG_INFO(total_elapsed << " ms elapsed.");
   
   add_clustering_info(graph, clustering, exp);
-  add_scores(graph, clustering, sampler, exp);
+  add_scores(graph, clustering, sampler, args.count("fast-scores"), exp);
   exp.save();
 }
