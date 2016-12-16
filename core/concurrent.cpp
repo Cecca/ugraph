@@ -32,6 +32,9 @@ parse_args(int argc, char** argv)
      "tolerated absolute error")
     ("delta", po::value<double>()->default_value(0.01),
      "error probability")
+    ("guess", po::value<double>()->default_value(1.0),
+     "initial guess")
+    ("greedy", "be greedy in the addition of the nodes")
     ("theory-samples-fraction", po::value<double>()->default_value(0.1),
      "Fraction of samples to be used with respect to the theory-defined formula")
     ("seed", po::value<uint64_t>(),
@@ -101,8 +104,11 @@ int main(int argc, char**argv) {
     epsilon = args["epsilon"].as<double>(),
     delta = args["delta"].as<double>(),
     theory_samples_fraction = args["theory-samples-fraction"].as<double>(),
+    initial_guess = args["guess"].as<double>(),
     p_low = 0.0001;
 
+  bool greedy = args.count("greedy") > 0;
+  
   size_t
     batch = args["batch"].as<size_t>();
 
@@ -117,6 +123,8 @@ int main(int argc, char**argv) {
   exp.tag("p_low", p_low);
   exp.tag("seed", seed);
   exp.tag("batch", batch);
+  exp.tag("greedy", ((bool) greedy));
+  exp.tag("initial-guess", initial_guess);
   exp.tag("git-revision", std::string(g_GIT_SHA1));
   exp.tag("theory-samples-fraction", theory_samples_fraction);
   exp.tag("num-threads", omp_threads);
@@ -144,10 +152,10 @@ int main(int argc, char**argv) {
     exp.tag("depth", depth);
     // Override the sampler, using the limited depth one
     BfsSampler sampler(graph, depth, prob_to_samples, seed, omp_threads);
-    clustering = concurrent_cluster(graph, sampler, batch, p_low, rnd, exp);
+    clustering = concurrent_cluster(graph, sampler, batch, p_low, initial_guess, greedy, rnd, exp);
   } else {
     exp.tag("depth", std::numeric_limits<double>::infinity());
-    clustering = concurrent_cluster(graph, sampler, batch, p_low, rnd, exp);
+    clustering = concurrent_cluster(graph, sampler, batch, p_low, initial_guess, greedy, rnd, exp);
   }
 
   auto breakpoint = std::chrono::steady_clock::now();

@@ -91,6 +91,8 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
                                                 Sampler & sampler,
                                                 const size_t batch,
                                                 const probability_t p_low,
+                                                const probability_t initial_guess,
+                                                const bool greedy,
                                                 Xorshift1024star & rnd,
                                                 ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
@@ -116,8 +118,8 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
   // ----------------------------------
   // Algorithm
   
-  probability_t p_curr = 1.0;   // current probability threshold
-  size_t uncovered = n;         // Count of uncovered nodes
+  probability_t p_curr = initial_guess;   // current probability threshold
+  size_t uncovered = n;                   // Count of uncovered nodes
   
   while(uncovered > 0) {
     probability_t selection_prob = ((double) batch) / uncovered;
@@ -130,7 +132,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
     if (uncovered == 0) { break; } // early exit if all the uncovered nodes are turned into centers
 
     while (true) { // Termination condition at the end
-      LOG_DEBUG("Start guessing probabilities");
+      LOG_INFO("p_curr=" << p_curr);
       probability_t max_p = 0.0;
       sampler.min_probability(graph, p_curr);
       probabilities_pq.clear();
@@ -169,7 +171,7 @@ std::vector< ClusterVertex > concurrent_cluster(const ugraph_t & graph,
     std::make_heap(probabilities_pq.begin(), probabilities_pq.end());
     LOG_DEBUG("Made heap");
     size_t covered=num_selected;
-    while (covered<uncovered/2) {
+    while ((greedy || covered<uncovered/2) && !probabilities_pq.empty()) {
       assert(!probabilities_pq.empty());
       std::pop_heap(probabilities_pq.begin(), probabilities_pq.end());
       auto to_cover = probabilities_pq.back();
