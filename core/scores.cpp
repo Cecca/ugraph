@@ -111,12 +111,19 @@ void add_scores(const ugraph_t & graph,
                 const bool only_p_min,
                 ExperimentReporter & experiment) {
   std::vector< std::vector< ugraph_vertex_t > > clusters = build_clusters(vinfo);
+
+  size_t num_clusters = 0;
+  for(const auto & v : vinfo) {
+    if (v.is_center()) num_clusters++;
+  }
   
   LOG_INFO("Computing minimum probability");
   probability_t min_p = min_probability(vinfo);
   sampler.min_probability(graph, min_p);
   if (only_p_min) {
-    LOG_INFO("Clustering with:" << "\n\tp_min = " << min_p);
+    LOG_INFO("Clustering with:" <<
+             "\n\t# clusters = " << num_clusters <<
+             "\n\tp_min = " << min_p);
     experiment.append("scores", {{"p_min", min_p},});
     return;
   }
@@ -126,6 +133,7 @@ void add_scores(const ugraph_t & graph,
   double avpr = average_vertex_pairwise_reliability(graph, clusters, sampler);
 
   LOG_INFO("Clustering with:" <<
+           "\n\t# clusters = " << num_clusters << 
            "\n\tp_min = " << min_p <<
            "\n\tavpr  = " << avpr <<
            "\n\tacr   = " << acr);
