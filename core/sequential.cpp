@@ -77,11 +77,12 @@ void check_num_components(const ugraph_t & graph, const size_t target, const siz
 
 void add_clustering_info(const ugraph_t &graph,
                          const std::vector<ClusterVertex> &vinfo,
+                         const std::string & table_name,
                          ExperimentReporter &exp) {
   size_t n = vinfo.size();
   for (ugraph_vertex_t v = 0; v < n; v++) {
     ugraph_vertex_t center = vinfo[v].center();
-    exp.append("clustering", {{"id", v},
+    exp.append(table_name.c_str(), {{"id", v},
                               {"center", center},
                               {"label", graph[v].label},
                               {"center label", graph[center].label},
@@ -145,6 +146,7 @@ int main(int argc, char**argv) {
   CCSampler sampler(graph, prob_to_samples, seed, omp_threads);
   
   std::vector<ClusterVertex> clustering;
+  std::vector<ClusterVertex> max_sum_clustering;
   
   auto start = std::chrono::steady_clock::now();
   
@@ -164,7 +166,7 @@ int main(int argc, char**argv) {
 
   exp.append("performance", {{"time", elapsed},});
   
-  add_clustering_info(graph, clustering, exp);
+  add_clustering_info(graph, clustering, "clustering" exp);
   add_scores(graph, clustering, sampler, args.count("fast-scores"), exp);
   exp.save();
   LOG_INFO(elapsed << " ms elapsed.");

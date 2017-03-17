@@ -29,6 +29,16 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
   throw std::logic_error("No uncovered node to select");
 }
 
+double sum_center_connection_probabilities(const std::vector< ClusterVertex > & vinfo) {
+  double sum = 0.0;
+  for (const ClusterVertex & v : vinfo) {
+    if (v.is_covered()) {
+      sum += v.probability();
+    }
+  }
+  return sum;
+}
+
 template<typename Sampler>
 std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
                                                 Sampler & sampler,
@@ -40,14 +50,20 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
   const size_t n = boost::num_vertices(graph);
   std::vector< ClusterVertex > vinfo(n);
   std::vector< ClusterVertex > valid_clustering(n);
+  std::vector< ClusterVertex > max_sum_clustering(n);
   std::vector< probability_t > probabilities(n);
+  size_t iteration = 0;
   probability_t p_curr = 1.0;
   Guesser guesser(rate, p_low);
   size_t uncovered = n;
   size_t used_slack = 0;
+  double max_sum = 0.0;
+  probability_t max_sum_p_curr = 1.0;
+  size_t max_sum_clustering_iteration = 0;
+  size_t best_clustering_iteration = 0;
 
   while (!guesser.stop()) {
-    LOG_INFO("Build clustering with p_curr=" << p_curr);
+    LOG_INFO(">>> Build clustering with p_curr=" << p_curr);
     std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
     uncovered = n;
     used_slack = 0;
@@ -72,8 +88,7 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
           }
         }
       }
-      
-      if (center_cnt + uncovered <= k + slack) {        
+      if (center_cnt + uncovered <= k + slack) {
         // Complete the clustering using the slack and break from the loop.
         for (ugraph_vertex_t i=0; i<n; i++) {
           if (!vinfo[i].is_covered()) {
@@ -85,9 +100,23 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
         break;
       }
     }
+    double prob_sum = sum_center_connection_probabilities(vinfo);
+    LOG_INFO("Sum of probability connection to centers " << prob_sum);
+    // Save the snapshot of the k-median like clustering
+    if (prob_sum > max_sum) {
+      max_sum = prob_sum;
+      max_sum_clustering_iteration = iteration;
+      max_sum_p_curr = p_curr;
+      for (ugraph_vertex_t i=0; i<n; i++) {
+        max_sum_clustering[i] = vinfo[i];
+      }
+    }
+
+    // Check if the clustering is valid
     if (uncovered == 0) {
       guesser.below();
       // this is a valid clustering, keep track of it
+      best_clustering_iteration = iteration;
       for (ugraph_vertex_t i=0; i<n; i++) {
         valid_clustering[i] = vinfo[i];
       }
@@ -98,10 +127,15 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
     LOG_INFO("Still " << uncovered << " nodes to cover");
     // update the probability
     p_curr = guesser.guess();
+    iteration++;
   }
 
   experiment.append("algorithm-info", {{"used-slack", used_slack},
-        {"p_curr", p_curr}});
+        {"p_curr", p_curr},
+          {"k-median p_curr", max_sum_p_curr},
+            {"k- median score", max_sum},
+          {"best k-center iteration", best_clustering_iteration},
+            {"best k-median iteration", max_sum_clustering_iteration}});
   return valid_clustering;
   
 }
