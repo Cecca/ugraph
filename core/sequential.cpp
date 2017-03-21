@@ -155,10 +155,14 @@ int main(int argc, char**argv) {
     exp.tag("depth", depth);
     // Override the sampler, using the limited depth one
     BfsSampler sampler(graph, depth, prob_to_samples, seed, omp_threads);
-    clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+    auto res = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+    clustering = res.first;
+    max_sum_clustering = res.second;
   } else {
     exp.tag("depth", std::numeric_limits<double>::infinity());
-    clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+    auto res = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+    clustering = res.first;
+    max_sum_clustering = res.second;
   }
   
   auto end = std::chrono::steady_clock::now();
@@ -166,7 +170,8 @@ int main(int argc, char**argv) {
 
   exp.append("performance", {{"time", elapsed},});
   
-  add_clustering_info(graph, clustering, "clustering" exp);
+  add_clustering_info(graph, clustering, "clustering", exp);
+  add_clustering_info(graph, max_sum_clustering, "k-median clustering", exp);
   add_scores(graph, clustering, sampler, args.count("fast-scores"), exp);
   exp.save();
   LOG_INFO(elapsed << " ms elapsed.");

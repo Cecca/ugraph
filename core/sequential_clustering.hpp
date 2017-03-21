@@ -40,13 +40,14 @@ double sum_center_connection_probabilities(const std::vector< ClusterVertex > & 
 }
 
 template<typename Sampler>
-std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
-                                                Sampler & sampler,
-                                                const size_t k,
-                                                const size_t slack,
-                                                const double rate,
-                                                const probability_t p_low,
-                                                ExperimentReporter & experiment) {
+std::pair< std::vector< ClusterVertex >, std::vector< ClusterVertex > >
+sequential_cluster(const ugraph_t & graph,
+                   Sampler & sampler,
+                   const size_t k,
+                   const size_t slack,
+                   const double rate,
+                   const probability_t p_low,
+                   ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
   std::vector< ClusterVertex > vinfo(n);
   std::vector< ClusterVertex > valid_clustering(n);
@@ -136,6 +137,6 @@ std::vector< ClusterVertex > sequential_cluster(const ugraph_t & graph,
             {"k- median score", max_sum},
           {"best k-center iteration", best_clustering_iteration},
             {"best k-median iteration", max_sum_clustering_iteration}});
-  return valid_clustering;
+  return std::make_pair( valid_clustering, max_sum_clustering );
   
 }
