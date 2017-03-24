@@ -67,3 +67,35 @@ private:
   bool binary_search;
   size_t m_i;
 };
+
+
+class GeometricGuesser {
+  public:
+  GeometricGuesser(const probability_t gamma, const probability_t p_low)
+    : m_p_low(p_low), m_gamma(gamma), m_guess(1.0), m_below(false) {}
+
+  /** Set the state of the guesser when the guess is below the solution */
+  void below() {
+    m_below = true;
+  }
+
+  /** Set the state of the guesser when the guess is above the solution */
+  void above() {
+    m_guess *= m_gamma;
+  }
+
+  probability_t guess() {
+    return m_guess;
+  }
+
+  bool stop() const {
+    return m_below || m_guess < m_p_low;
+  }
+
+private:
+  const probability_t m_p_low;
+  probability_t m_gamma;
+  probability_t m_guess;
+  bool m_below;
+
+};
