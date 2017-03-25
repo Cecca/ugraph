@@ -4,10 +4,10 @@
 #include "types.hpp"
 #include "require.hpp"
 
-class Guesser {
+class ExponentialGuesser {
 
 public:
-  Guesser(const probability_t gamma, const probability_t p_low)
+  ExponentialGuesser(const probability_t gamma, const probability_t p_low)
       : m_p_low(p_low), m_gamma(gamma), m_upper(1.0), m_lower(1.0),
         binary_search(false), m_i(0) {}
 
@@ -15,9 +15,9 @@ public:
   void below() {
     if (binary_search) {
       m_lower = (m_upper + m_lower) / 2;
-      LOG_DEBUG("[Guesser] Below in binary search (new m_lower" << m_lower << ")");
+      LOG_DEBUG("[ExponentialGuesser] Below in binary search (new m_lower" << m_lower << ")");
     } else {
-      LOG_DEBUG("[Guesser] Below in exponential search: start binary search");
+      LOG_DEBUG("[ExponentialGuesser] Below in exponential search: start binary search");
       binary_search = true; // Start binary search on the next call of `guess`
     }
   }
@@ -26,7 +26,7 @@ public:
   void above() {
     if (binary_search) {
       m_upper = (m_upper + m_lower) / 2;
-      LOG_DEBUG("[Guesser] Above in binary search (new m_upper" << m_lower << ")");
+      LOG_DEBUG("[ExponentialGuesser] Above in binary search (new m_upper" << m_lower << ")");
     } else {
       m_upper = m_lower;
       m_lower = 1.0 - m_gamma * (1 << m_i);
@@ -35,7 +35,7 @@ public:
         m_lower = m_p_low;
         binary_search = true;
       }
-      LOG_DEBUG("[Guesser] Above in exponential search. New m_lower " << m_lower);
+      LOG_DEBUG("[ExponentialGuesser] Above in exponential search. New m_lower " << m_lower);
     }
   }
 
@@ -53,7 +53,7 @@ public:
 
   bool stop() const {
     if (binary_search) {
-      LOG_DEBUG("[Guesser] Stopping condition: " << (1.0-m_lower/m_upper) << "<=" << m_gamma);
+      LOG_DEBUG("[ExponentialGuesser] Stopping condition: " << (1.0-m_lower/m_upper) << "<=" << m_gamma);
     }
     return binary_search && (1.0-m_lower/m_upper) <= m_gamma;
   }
