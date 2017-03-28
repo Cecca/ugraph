@@ -105,11 +105,17 @@ sequential_cluster(const ugraph_t & graph,
     LOG_INFO("Sum of probability connection to centers " << prob_sum);
     // Save the snapshot of the k-median like clustering
     if (prob_sum > max_sum) {
+      // get the first center, so to assign to it uncovered nodes
+      ugraph_vertex_t first_center_idx=0;
+      for (; first_center_idx<n || vinfo[first_center_idx].is_center(); first_center_idx++){}
       max_sum = prob_sum;
       max_sum_clustering_iteration = iteration;
       max_sum_p_curr = p_curr;
       for (ugraph_vertex_t i=0; i<n; i++) {
         max_sum_clustering[i] = vinfo[i];
+        if (!max_sum_clustering[i].is_covered()) {
+          max_sum_clustering[i].cover(first_center_idx, 0.0);
+        }
       }
     }
 
