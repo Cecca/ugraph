@@ -1,6 +1,7 @@
 #include "scores.hpp"
 #include "io.hpp"
 #include "json.hpp"
+#include <boost/filesystem.hpp>
 
 ugraph_vertex_t _find_id(const ugraph_t & graph, std::string label) {
   using namespace boost;
@@ -31,6 +32,7 @@ parse_args(int argc, char** argv)
     ("fast-scores", "compute only p_min")
     ("graph", po::value<std::string>(),
      "file containing graph data")
+    ("odir", po::value<std::string>(), "output directory")
     ("clustering", po::value<std::string>(),
      "json file containing the clustering");
   
@@ -79,7 +81,7 @@ std::vector< ClusterVertex > load_clustering(const ugraph_t & graph,
 }
 
 bool should_run(boost::program_options::variables_map args) {
-  if (args.count("overwrite") > 0) {
+  if (args.count("overwrite") > 0 || args.count("odir") > 0) {
     return true;
   }
   using json = nlohmann::json;
@@ -108,7 +110,20 @@ int main(int argc, char *argv[]) {
   auto omp_threads = omp_get_max_threads();
   LOG_INFO("Running with " << omp_threads << " threads");
 
-  std::string graph_path = args["graph"].as<std::string>();
+  std::string clustering_path = args["clustering"].as<std::string>();
+  
+  using json = nlohmann::json;
+  std::ifstream input(clustering_path);
+  json data;
+  input >> data;
+  input.close();
+  
+  std::string graph_path;
+  if (args.count("graph")) {
+    graph_path = args["graph"].as<std::string>();
+  } else {
+    graph_path = data["tags"]["graph"];
+  }
   ugraph_t graph;
   read_edge_list(graph, graph_path);
 
@@ -118,8 +133,7 @@ int main(int argc, char *argv[]) {
   auto prob_to_samples = [epsilon, delta](double p) {return 1/(epsilon*epsilon*p) * log(1/delta);};
   CCSampler sampler(graph, prob_to_samples, seed, omp_threads);
   sampler.min_probability(graph, 0.01);
-
-  std::string clustering_path = args["clustering"].as<std::string>();
+  
   auto vinfo = load_clustering(graph, clustering_path, sampler);
   auto clusters = build_clusters(vinfo);
   LOG_DEBUG("Built clusters");
@@ -127,12 +141,6 @@ int main(int argc, char *argv[]) {
   LOG_INFO("Computing minimum probability");
   probability_t min_p = min_probability(vinfo);
 
-  using json = nlohmann::json;
-  // add the scores to the json file
-  std::ifstream input(clustering_path);
-  json data;
-  input >> data;
-  input.close();
   data["tables"]["scores"][0]["p_min"] = min_p;
   if (args.count("fast-scores") == 0) {
     LOG_INFO("Computing ACR");
@@ -142,11 +150,35 @@ int main(int argc, char *argv[]) {
     data["tables"]["scores"][0]["acr"] = acr;
     data["tables"]["scores"][0]["avpr"] = avpr;
   }
-  
-  LOG_INFO("Writing the result in place in file " << clustering_path);
-  std::ofstream output(clustering_path);
-  output << data << std::endl;
-  output.close();
+
+  if (args.count("odir")) {
+    boost::filesystem::path dir(args["odir"].as<std::string>());
+    if (!boost::filesystem::is_directory(dir)) {
+      LOG_INFO("Creating directory " << dir);
+      boost::filesystem::create_directory(dir);
+    }
+    boost::filesystem::path clustering_fs_path (clustering_path);
+    boost::filesystem::path out = dir / clustering_fs_path.filename();
+    LOG_INFO("Writing the result in file " << out);
+    std::ofstream output(out.string());
+    json clustering_table = json::array();
+    for (ugraph_vertex_t v = 0; v < boost::num_vertices(graph); v++) {
+      ugraph_vertex_t center = vinfo[v].center();
+      clustering_table.push_back({{"id", v},
+                              {"center", center},
+                              {"label", graph[v].label},
+                              {"center label", graph[center].label},
+                              {"probability", vinfo[v].probability()}});
+    }
+    data["tables"]["clustering"] = clustering_table;
+    output << data << std::endl;
+    output.close();
+  } else {
+    LOG_INFO("Writing the result in place in file " << clustering_path);
+    std::ofstream output(clustering_path);
+    output << data << std::endl;
+    output.close();
+  }
   return 0;
 }
 
