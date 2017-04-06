@@ -55,7 +55,7 @@ sequential_cluster(const ugraph_t & graph,
   std::vector< probability_t > probabilities(n);
   size_t iteration = 0;
   probability_t p_curr = 1.0;
-  GeometricGuesser guesser(rate, p_low);
+  ExponentialGuesser guesser(rate, p_low);
   size_t uncovered = n;
   size_t used_slack = 0;
   double max_sum = 0.0;
