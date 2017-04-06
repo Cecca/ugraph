@@ -7,6 +7,7 @@
 #include "types.hpp"
 #include "rand.hpp"
 #include "logging.hpp"
+#include "counts_cache.hpp"
 
 struct CCSamplerThreadState {
   typedef std::vector< int > component_vector_t;
@@ -75,6 +76,11 @@ public:
                                   const ugraph_vertex_t from,
                                   std::vector< probability_t > & probabilities);
 
+  size_t connection_probabilities_cache(const ugraph_t & graph,
+                                        const ugraph_vertex_t from,
+                                        ConnectionCountsCache & cccache,
+                                        std::vector< probability_t > & probabilities);
+  
   size_t connection_probabilities(const ugraph_t & graph,
                                   const ugraph_vertex_t from,
                                   const std::vector< ugraph_vertex_t > & targets,

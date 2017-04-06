@@ -19,6 +19,7 @@ set( HEADER_FILES
   guesser.hpp
   sequential_clustering.hpp
   concurrent_clustering.hpp
+  counts_cache.hpp
 )
 
 set( LIB_FILES

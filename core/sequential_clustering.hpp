@@ -7,6 +7,7 @@
 #include "experiment_reporter.hpp"
 #include "cluster_vertex.hpp"
 #include "guesser.hpp"
+#include "counts_cache.hpp"
 
 size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
   size_t cnt = 0;
@@ -27,6 +28,17 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
     }
   }
   throw std::logic_error("No uncovered node to select");
+}
+
+ugraph_vertex_t pick_vertex(const ugraph_t & graph,
+                            ConnectionCountsCache & cccache,
+                            const std::vector< ClusterVertex > & vinfo) {
+  int query_result = cccache.uncovered_node(vinfo);
+  if (query_result >= 0) {
+    return (ugraph_vertex_t) query_result;
+  } else {
+    return pick_vertex(graph, vinfo);
+  }
 }
 
 double sum_center_connection_probabilities(const std::vector< ClusterVertex > & vinfo) {
@@ -53,6 +65,7 @@ sequential_cluster(const ugraph_t & graph,
   std::vector< ClusterVertex > valid_clustering(n);
   std::vector< ClusterVertex > max_sum_clustering(n);
   std::vector< probability_t > probabilities(n);
+  ConnectionCountsCache cccache(k);
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   ExponentialGuesser guesser(rate, p_low);
@@ -65,6 +78,7 @@ sequential_cluster(const ugraph_t & graph,
 
   while (!guesser.stop()) {
     LOG_INFO(">>> Build clustering with p_curr=" << p_curr);
+    cccache.cleanup();
     std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
     uncovered = n;
     used_slack = 0;
@@ -74,10 +88,10 @@ sequential_cluster(const ugraph_t & graph,
     // stopping condition is _inside_ the cycle
     for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
       assert(uncovered == count_uncovered(vinfo));
-      ugraph_vertex_t center = pick_vertex(graph, vinfo);
+      ugraph_vertex_t center = pick_vertex(graph, cccache, vinfo);
       vinfo[center].make_center(center);
       uncovered--;
-      sampler.connection_probabilities(graph, center, probabilities);
+      sampler.connection_probabilities_cache(graph, center, cccache, probabilities);
       // Cover the nodes
       for (ugraph_vertex_t i=0; i<n; i++) {
         if (probabilities[i] >= p_curr) {
