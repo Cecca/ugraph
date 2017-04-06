@@ -44,7 +44,7 @@ public:
 
   void add_new(ugraph_vertex_t v, size_t n) {
     REQUIRE(!contains(v), "Cache already contains the requested element");
-    LOG_INFO("Adding " << v << " to the cache");
+    LOG_DEBUG("Adding " << v << " to the cache");
     m_cache.emplace(v, ConnectionCountsCacheElement(n));
   }
 
@@ -57,17 +57,37 @@ public:
     }
   }
 
-  int uncovered_node(const std::vector< ClusterVertex > & vinfo) {
+  size_t size() const {
+    return m_cache.size();
+  }
+
+  std::string str() const {
+    std::stringstream sstr;
+    sstr << "Cache size: " << m_cache.size() << " ::: ";
     for (auto it=m_cache.begin(); it != m_cache.end(); it++) {
-      if (!vinfo[it->first].is_covered()) {
-        return it->first;
+      sstr << it->first << "(" << it->second.times_accessed << ") ";
+    }
+    return sstr.str();
+  }
+
+  int uncovered_node(const std::vector< ClusterVertex > & vinfo) {
+    size_t n = vinfo.size();
+    for (int i=0; i<n; i++) {
+      if (m_cache.count(i) > 0) {
+        if (!vinfo[i].is_covered()) {
+          return i;
+        } else if (vinfo[i].is_covered() && !vinfo[i].is_center()) {
+          // reset counter to mark for eviction for nodes that are
+          // covered but are not centers.
+          m_cache[i].times_accessed = 0;
+        }
       }
     }
     return -1;
   }
   
   void cleanup() {
-    if (m_cache.size() > m_max_size) {
+    while (m_cache.size() > m_max_size) {
       // remove the cache entry with the lowest times_accessed count
       size_t min_accessed = std::numeric_limits<size_t>::max();
       ugraph_vertex_t min_v = -1;
@@ -77,8 +97,8 @@ public:
           min_v = it->first;
         }
       }
-      LOG_INFO("Removing from cache vertex " << min_v <<
-               " which was accessed " << min_accessed << " times");
+      LOG_DEBUG("Removing from cache vertex " << min_v <<
+                " which was accessed " << min_accessed << " times");
       m_cache.erase(min_v);
     }
   }
