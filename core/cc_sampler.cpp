@@ -71,13 +71,13 @@ size_t CCSampler::connection_probabilities(const ugraph_t & graph,
 #pragma omp parallel for default(none) shared(graph)
   for (size_t sample_idx=0; sample_idx < num_samples; sample_idx++) {
     auto tid = omp_get_thread_num();
-    auto & tstate = m_thread_states[tid];
+    auto & connection_counts = m_thread_states[tid].connection_counts;
     
     const auto & smpl = m_samples[sample_idx];
     const int root_cc = smpl[from];
     for (size_t i=0; i< n; i++) {
       if (smpl[i] == root_cc) {
-        tstate.connection_counts[i]++;
+        connection_counts[i]++;
       }
     }
   }
