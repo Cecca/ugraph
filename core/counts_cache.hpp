@@ -30,6 +30,8 @@ class ConnectionCountsCache {
 public:
   ConnectionCountsCache(size_t max_size)
     : m_max_size(max_size),
+      m_accesses(0),
+      m_hits(0),
       m_cache(std::unordered_map<ugraph_vertex_t, ConnectionCountsCacheElement>()) {}
 
   bool contains(ugraph_vertex_t v) const {
@@ -50,7 +52,9 @@ public:
   }
 
   ConnectionCountsCacheElement& get_or_new(ugraph_vertex_t v, size_t n) {
+    m_accesses++;
     if (contains(v)) {
+      m_hits++;
       return get(v);
     } else {
       add_new(v, n);
@@ -58,6 +62,13 @@ public:
     }
   }
 
+  double perc_hits() const {
+    if (m_accesses == 0) {
+      return 0.0;
+    }
+    return 100.0 * m_hits / m_accesses;
+  }
+  
   size_t size() const {
     return m_cache.size();
   }
@@ -106,6 +117,8 @@ public:
   
 private:
   size_t m_max_size;
+  size_t m_accesses;
+  size_t m_hits;
   
   std::unordered_map<ugraph_vertex_t, ConnectionCountsCacheElement> m_cache;
 

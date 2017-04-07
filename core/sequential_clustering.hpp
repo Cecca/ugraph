@@ -65,8 +65,7 @@ sequential_cluster(const ugraph_t & graph,
   std::vector< ClusterVertex > valid_clustering(n);
   std::vector< ClusterVertex > max_sum_clustering(n);
   std::vector< probability_t > probabilities(n);
-  // TODO, estimate dinamically
-  ConnectionCountsCache cccache(std::min(k, 300ul));
+  ConnectionCountsCache cccache(k);
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   ExponentialGuesser guesser(rate, p_low);
@@ -148,6 +147,8 @@ sequential_cluster(const ugraph_t & graph,
     }
     
     LOG_INFO("Still " << uncovered << " nodes to cover");
+    LOG_INFO("Cache hit rate: " << std::fixed << std::setprecision(2)
+             << cccache.perc_hits() << "%");
     // update the probability
     p_curr = guesser.guess();
     iteration++;
