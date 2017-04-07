@@ -65,7 +65,7 @@ sequential_cluster(const ugraph_t & graph,
   std::vector< ClusterVertex > valid_clustering(n);
   std::vector< ClusterVertex > max_sum_clustering(n);
   std::vector< probability_t > probabilities(n);
-  ConnectionCountsCache cccache(k);
+  ConnectionCountsCache cccache(std::min(k, 500ul));
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   ExponentialGuesser guesser(rate, p_low);

@@ -115,6 +115,7 @@ def mcl(abc_path, inflation):
     print("Wrote JSON result to", fname)
     subprocess.call(["ugraph-scores",
                      "--epsilon", "1",
+                     "--fast-scores",
                      "--graph", abc_path,
                      "--clustering", fname])
     shutil.rmtree(workdir)
