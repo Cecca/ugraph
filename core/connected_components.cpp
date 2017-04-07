@@ -1,4 +1,5 @@
 #include "connected_components.hpp"
+#include "logging.hpp"
 
 void dfs(const ugraph_t & graph,
          const std::vector< bool > & smpl,
@@ -44,5 +45,54 @@ void connected_components(const ugraph_t & graph,
     if (components_map[root] < 0) {
       dfs(graph, smpl, components_map, stack, root, component_id++);
     }
+  }
+}
+
+void union_find(const ugraph_t & graph,
+                Xorshift1024star & rnd,
+                std::vector< size_t > & ranks,
+                std::vector< int > & roots) {
+  using namespace boost;
+  
+  std::fill(ranks.begin(), ranks.end(), 0);
+
+  // Each node starts in it own connected component
+  for (ugraph_vertex_t u=0; u < ranks.size(); ++u) {
+    roots[u] = u;
+  }
+
+  BGL_FORALL_EDGES(e, graph, ugraph_t) {
+    // sample the edge!
+    if (rnd.next_double() <= graph[e].probability) {
+      ugraph_vertex_t u = source(e, graph);
+      ugraph_vertex_t v = target(e, graph);
+      
+      // find roots
+      // TODO apply path compression
+      while (u != roots[u]) { u = roots[u]; }
+      while (v != roots[v]) { v = roots[v]; }
+
+      if (u != v) {
+        // the nodes are in different connected components
+        size_t
+          rank_u = ranks[u],
+          rank_v = ranks[v];
+        if (rank_u < rank_v) {
+          roots[u] = v;
+        } else if (rank_u > rank_v) {
+          roots[v] = u;
+        } else {
+          roots[v] = u;
+          ranks[u]++;
+        }
+      }
+    }
+  }
+
+  // Compress the components
+  for (ugraph_vertex_t u=0; u < ranks.size(); ++u) {
+    ugraph_vertex_t r = u;
+    while ( r != roots[r] ) { r = roots[r]; }
+    roots[u] = r;
   }
 }
