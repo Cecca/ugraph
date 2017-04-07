@@ -129,9 +129,9 @@ size_t CCSampler::connection_probabilities_cache(const ugraph_t & graph,
     const auto & smpl = m_samples[sample_idx];
     const int root_cc = smpl[from];
     for (size_t i=0; i< n; i++) {
-      if (smpl[i] == root_cc) {
-        connection_counts[i]++;
-      }
+      // Doing this way allows GCC (with -O3) to vectorize (probably)
+      // the code. The if statement is slighlty slower.
+      connection_counts[i] += ((smpl[i] == root_cc)? 1 : 0);
     }
   }
 
