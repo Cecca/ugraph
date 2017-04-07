@@ -20,6 +20,8 @@ namespace logging {
   void debug(std::string & msg);
   void trace(std::string & msg);
 
+  std::string vm_size();
+  
 }
 
 
