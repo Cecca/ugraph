@@ -46,6 +46,7 @@ public:
     REQUIRE(!contains(v), "Cache already contains the requested element");
     LOG_DEBUG("Adding " << v << " to the cache");
     m_cache.emplace(v, ConnectionCountsCacheElement(n));
+    cleanup_except(v);
   }
 
   ConnectionCountsCacheElement& get_or_new(ugraph_vertex_t v, size_t n) {
@@ -107,5 +108,22 @@ private:
   size_t m_max_size;
   
   std::unordered_map<ugraph_vertex_t, ConnectionCountsCacheElement> m_cache;
-  
+
+
+  void cleanup_except(ugraph_vertex_t u) {
+    while (m_cache.size() > m_max_size) {
+      // remove the cache entry with the lowest times_accessed count, if it's not the specified node
+      size_t min_accessed = std::numeric_limits<size_t>::max();
+      ugraph_vertex_t min_v = -1;
+      for (auto it=m_cache.begin(); it != m_cache.end(); it++) {
+        if (it->first != u && it->second.times_accessed < min_accessed) {
+          min_accessed = it->second.times_accessed;
+          min_v = it->first;
+        }
+      }
+      LOG_DEBUG("Removing from cache vertex " << min_v <<
+                " which was accessed " << min_accessed << " times");
+      m_cache.erase(min_v);
+    }
+  }
 };
