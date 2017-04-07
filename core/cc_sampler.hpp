@@ -15,11 +15,15 @@ struct CCSamplerThreadState {
   typedef std::vector< bool > edge_sample_t;
 
   CCSamplerThreadState(const ugraph_t &graph, Xorshift1024star randgen)
-      : stack(stack_t(boost::num_vertices(graph))),
-        edge_sample(edge_sample_t(boost::num_edges(graph))),
-        connection_counts(std::vector<size_t>(boost::num_vertices(graph))),
-        rnd(randgen){};
+    : ranks(std::vector<size_t>(boost::num_vertices(graph))),
+      stack(stack_t(boost::num_vertices(graph))),
+      edge_sample(edge_sample_t(boost::num_edges(graph))),
+      connection_counts(std::vector<size_t>(boost::num_vertices(graph))),
+      rnd(randgen){};
 
+  // Ranks data structure for union find
+  std::vector< size_t > ranks;
+  
   // Stacks for dfs, one for each thread
   stack_t stack;
 

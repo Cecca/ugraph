@@ -48,9 +48,10 @@ void CCSampler::sample_size(const ugraph_t & graph, size_t total_samples) {
   for (size_t i=start; i<start+new_samples; ++i) {
     auto tid = omp_get_thread_num();
     auto & tstate = m_thread_states[tid];
-    sample(graph, tstate);
+    //sample(graph, tstate);
     auto & components = m_samples[i];
-    connected_components(graph, tstate.edge_sample, components, tstate.stack);
+    union_find(graph, tstate.rnd, tstate.ranks, components);
+    //connected_components(graph, tstate.edge_sample, components, tstate.stack);
   }
 }
 
