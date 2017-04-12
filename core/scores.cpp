@@ -43,6 +43,15 @@ probability_t min_probability(const std::vector< ClusterVertex > & vinfo) {
   return min_p;
 }
 
+probability_t sum_probability(const std::vector< ClusterVertex > & vinfo) {
+  probability_t sum = 1.0;
+  for (const auto & v : vinfo) {
+    probability_t p = v.probability();
+    sum += p;
+  }
+  return sum;
+}
+
 double average_cluster_reliability(const ugraph_t & graph,
                                    const std::vector< std::vector<ugraph_vertex_t> > & clusters,
                                    CCSampler & sampler) {
@@ -119,12 +128,19 @@ void add_scores(const ugraph_t & graph,
   
   LOG_INFO("Computing minimum probability");
   probability_t min_p = min_probability(vinfo);
+  probability_t sum_p = sum_probability(vinfo);
+  probability_t avg_p = sum_p / boost::num_vertices(graph);
   sampler.min_probability(graph, min_p);
   if (only_p_min) {
     LOG_INFO("Clustering with:" <<
              "\n\t# clusters = " << num_clusters <<
-             "\n\tp_min = " << min_p);
-    experiment.append("scores", {{"p_min", min_p},});
+             "\n\tp_min = " << min_p <<
+             "\n\taverage p = " << avg_p);
+    experiment.append("scores",
+                      {{"p_min", min_p},
+                       {"probabilities sum", sum_p},
+                       {"average probability", avg_p},
+                       {"num clusters", num_clusters}});
     return;
   }
   LOG_INFO("Computing ACR");
@@ -135,7 +151,13 @@ void add_scores(const ugraph_t & graph,
   LOG_INFO("Clustering with:" <<
            "\n\t# clusters = " << num_clusters << 
            "\n\tp_min = " << min_p <<
+           "\n\taverage p = " << min_p <<
            "\n\tavpr  = " << avpr <<
            "\n\tacr   = " << acr);
-  experiment.append("scores", {{"acr", acr}, {"p_min", min_p}, {"avpr", avpr}});
+  experiment.append("scores", {{"acr", acr},
+                               {"p_min", min_p},
+                               {"avpr", avpr},
+                               {"probabilities sum", sum_p},
+                               {"average probability", avg_p},
+                               {"num clusters", num_clusters}});
 }
