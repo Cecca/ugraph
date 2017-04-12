@@ -130,6 +130,7 @@ void add_scores(const ugraph_t & graph,
   probability_t min_p = min_probability(vinfo);
   probability_t sum_p = sum_probability(vinfo);
   probability_t avg_p = sum_p / boost::num_vertices(graph);
+  LOG_INFO("Sum_p " << sum_p << " avg_p " << avg_p);
   sampler.min_probability(graph, min_p);
   if (only_p_min) {
     LOG_INFO("Clustering with:" <<
@@ -151,7 +152,7 @@ void add_scores(const ugraph_t & graph,
   LOG_INFO("Clustering with:" <<
            "\n\t# clusters = " << num_clusters << 
            "\n\tp_min = " << min_p <<
-           "\n\taverage p = " << min_p <<
+           "\n\taverage p = " << avg_p <<
            "\n\tavpr  = " << avpr <<
            "\n\tacr   = " << acr);
   experiment.append("scores", {{"acr", acr},

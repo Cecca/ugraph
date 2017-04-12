@@ -67,11 +67,12 @@ average_probability_cluster(const ugraph_t & graph,
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   probability_t reliable_estimate_lower_bound = 1.0;
+  // FIXME Use guesser
   ExponentialGuesser guesser(rate, p_low);
   size_t uncovered = n;
   double max_sum = 0.0;
 
-  while (!guesser.stop()) {
+  while (true) {
     LOG_INFO(">>> Build clustering with p_curr=" << p_curr);
     cccache.cleanup();
     LOG_DEBUG(cccache.str());
@@ -102,21 +103,20 @@ average_probability_cluster(const ugraph_t & graph,
     double prob_sum = sum_center_connection_probabilities(vinfo);
     LOG_INFO("Sum of probability connection to centers " << prob_sum);
 
-    // Check if the clustering is valid
-    if (prob_sum > max_sum) {
-      guesser.below();
-      // this is a valid clustering, keep track of it
-      for (ugraph_vertex_t i=0; i<n; i++) {
-        valid_clustering[i] = vinfo[i];
-      }
+    if (prob_sum >= max_sum) {
+      max_sum = prob_sum;
     } else {
-      guesser.above();
+      break;
     }
-    
+
+    for (ugraph_vertex_t i=0; i<n; i++) {
+      valid_clustering[i] = vinfo[i];
+    }
+
     LOG_INFO("Cache hit rate: " << std::fixed << std::setprecision(2)
              << cccache.perc_hits() << "%");
     // update the probability
-    p_curr = guesser.guess();
+    p_curr *= rate;
     reliable_estimate_lower_bound =
       (p_curr < reliable_estimate_lower_bound)? p_curr : reliable_estimate_lower_bound;
     iteration++;
@@ -125,9 +125,8 @@ average_probability_cluster(const ugraph_t & graph,
   // Fix uncovered nodes
   // get the first center, so to assign to it uncovered nodes
   ugraph_vertex_t first_center_idx=0;
-  for (; first_center_idx<n || vinfo[first_center_idx].is_center(); first_center_idx++){}
+  for (; first_center_idx<n || valid_clustering[first_center_idx].is_center(); first_center_idx++){}
   for (ugraph_vertex_t i=0; i<n; i++) {
-    valid_clustering[i] = vinfo[i];
     if (!valid_clustering[i].is_covered()) {
       valid_clustering[i].cover(first_center_idx, 0.0);
     }
