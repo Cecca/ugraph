@@ -72,7 +72,7 @@ average_probability_cluster(const ugraph_t & graph,
   size_t uncovered = n;
   double max_sum = 0.0;
 
-  while (true) {
+  while (!guesser.stop()) {
     LOG_INFO(">>> Build clustering with p_curr=" << p_curr);
     cccache.cleanup();
     LOG_DEBUG(cccache.str());
@@ -99,24 +99,29 @@ average_probability_cluster(const ugraph_t & graph,
           }
         }
       }
+
+      if (uncovered == 0) {
+        break;
+      }
+
     }
     double prob_sum = sum_center_connection_probabilities(vinfo);
-    LOG_INFO("Sum of probability connection to centers " << prob_sum);
+    LOG_INFO("Average connection probability " << prob_sum / n);
 
     if (prob_sum >= max_sum) {
+      guesser.above();
+      for (ugraph_vertex_t i=0; i<n; i++) {
+        valid_clustering[i] = vinfo[i];
+      }
       max_sum = prob_sum;
     } else {
-      break;
-    }
-
-    for (ugraph_vertex_t i=0; i<n; i++) {
-      valid_clustering[i] = vinfo[i];
+      guesser.below();
     }
 
     LOG_INFO("Cache hit rate: " << std::fixed << std::setprecision(2)
              << cccache.perc_hits() << "%");
     // update the probability
-    p_curr *= rate;
+    p_curr = guesser.guess();
     reliable_estimate_lower_bound =
       (p_curr < reliable_estimate_lower_bound)? p_curr : reliable_estimate_lower_bound;
     iteration++;
