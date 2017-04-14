@@ -73,6 +73,11 @@ public:
     return m_cache.size();
   }
 
+  void set_accessed(ugraph_vertex_t v, size_t count) {
+    REQUIRE(contains(v), "Cannot set access count for missing node");
+    m_cache[v].times_accessed = count;
+  }
+
   std::string str() const {
     std::stringstream sstr;
     sstr << "Cache size: " << m_cache.size() << " ::: ";
@@ -81,7 +86,7 @@ public:
     }
     return sstr.str();
   }
-
+  
   int uncovered_node(const std::vector< ClusterVertex > & vinfo) {
     size_t n = vinfo.size();
     for (int i=0; i<n; i++) {

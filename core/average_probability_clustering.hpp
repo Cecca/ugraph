@@ -20,10 +20,11 @@ size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
 }
 
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
+                            const probability_t p_curr,
                             const std::vector< ClusterVertex > & vinfo) {
   auto n = boost::num_vertices(graph);
   for (ugraph_vertex_t i=0; i<n; i++) {
-    if (!vinfo[i].is_covered()) {
+    if (!vinfo[i].is_covered() || vinfo[i].probability() < p_curr) {
       return i;
     }
   }
@@ -31,14 +32,23 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
 }
 
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
+                            const probability_t p_curr,
                             ConnectionCountsCache & cccache,
                             const std::vector< ClusterVertex > & vinfo) {
-  int query_result = cccache.uncovered_node(vinfo);
-  if (query_result >= 0) {
-    return (ugraph_vertex_t) query_result;
-  } else {
-    return pick_vertex(graph, vinfo);
+  size_t n = vinfo.size();
+  for (ugraph_vertex_t i=0; i<n; i++) {
+    if (cccache.contains(i)) {
+      if (!vinfo[i].is_covered() || vinfo[i].probability() < p_curr) {
+        return i;
+      } else if (vinfo[i].is_covered() && !vinfo[i].is_center()) {
+        // reset counter to mark for eviction for nodes that are
+        // covered but are not centers.
+        cccache.set_accessed(i, 0);
+      }
+    }
   }
+  
+  return pick_vertex(graph, p_curr, vinfo);
 }
 
 double sum_center_connection_probabilities(const std::vector< ClusterVertex > & vinfo) {
@@ -67,8 +77,6 @@ average_probability_cluster(const ugraph_t & graph,
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   probability_t reliable_estimate_lower_bound = 1.0;
-  // TODO Implement exponential guesser with better binary search,
-  // that searched from the second-to-last increasing p_min
   ExtendedExponentialGuesser guesser(rate, p_low);
   size_t uncovered = n;
   double max_sum = 0.0;
@@ -85,9 +93,11 @@ average_probability_cluster(const ugraph_t & graph,
     // stopping condition is _inside_ the cycle
     for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
       assert(uncovered == count_uncovered(vinfo));
-      ugraph_vertex_t center = pick_vertex(graph, cccache, vinfo);
-      vinfo[center].make_center(center);
-      uncovered--;
+      ugraph_vertex_t center = pick_vertex(graph, p_curr, cccache, vinfo);
+      if (!vinfo[center].is_covered()) {
+        uncovered--;
+      }
+      vinfo[center].force_make_center(center);
       sampler.connection_probabilities_cache(graph, center, cccache, probabilities);
       // Cover the nodes
       for (ugraph_vertex_t i=0; i<n; i++) {

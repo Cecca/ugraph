@@ -28,12 +28,18 @@ public:
   }
 
   void make_center(ugraph_vertex_t id) {
-    assert(!is_covered());
+    REQUIRE(!is_covered(), "The node is already covered");
     m_center = id;
     m_is_center = true;
     m_probability = 1.0;
   }
 
+  void force_make_center(ugraph_vertex_t id) {
+    m_center = id;
+    m_is_center = true;
+    m_probability = 1.0;
+  }
+  
   void cover(ugraph_vertex_t center, probability_t prob) {
     m_center = center;
     m_probability = prob;
