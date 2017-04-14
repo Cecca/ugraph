@@ -67,8 +67,9 @@ average_probability_cluster(const ugraph_t & graph,
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   probability_t reliable_estimate_lower_bound = 1.0;
-  // FIXME Use guesser
-  ExponentialGuesser guesser(rate, p_low);
+  // TODO Implement exponential guesser with better binary search,
+  // that searched from the second-to-last increasing p_min
+  ExtendedExponentialGuesser guesser(rate, p_low);
   size_t uncovered = n;
   double max_sum = 0.0;
 
