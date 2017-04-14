@@ -9,6 +9,74 @@
 #include "guesser.hpp"
 #include "counts_cache.hpp"
 
+class APCExponentialGuesser {
+
+public:
+  APCExponentialGuesser(const probability_t gamma, const probability_t p_low)
+    : m_p_low(p_low), m_gamma(gamma), m_upper(1.0), m_lower(1.0), m_avg_p(0.0),
+      binary_search(false), m_i(0) {}
+
+  void update(probability_t avg_p) {
+    if (binary_search) {
+      if (avg_p > m_avg_p) {
+        m_avg_p = avg_p;
+        m_lower = (m_upper + m_lower) / 2;
+        LOG_DEBUG("[APCExponentialGuesser] Below in binary search (new m_lower " << m_lower << ")");
+      } else {
+        m_upper = (m_upper + m_lower) / 2;
+        LOG_DEBUG("[APCExponentialGuesser] Above in binary search (new m_upper " << m_upper << ")");
+      }
+    } else {
+      // We decrease the guess until the score starts to decrease
+      if (avg_p > m_avg_p) {
+        m_avg_p = avg_p;
+        m_upper = (m_i >= 2)? (1.0 - m_gamma * (1 << (m_i - 2))) : 1.0;
+        m_lower = 1.0 - m_gamma * (1 << m_i);
+        m_i++;
+        if (m_lower <= m_p_low) {
+          m_lower = m_p_low;
+          binary_search = true;
+        }
+        LOG_DEBUG("[APCExponentialGuesser] Above in exponential search. New m_lower " << m_lower << " new m_upper " << m_upper);
+      } else {
+        // As soon as avg_p decreases, we start the binary search
+        LOG_DEBUG("[APCExponentialGuesser] Below in exponential search: start binary search");
+        binary_search = true; // Start binary search on the next call of `guess`
+      }
+    }
+  }
+  
+  probability_t guess() {
+    REQUIRE(m_lower <= m_upper, "Upper and lower bounds inverted!");
+    if (binary_search) {
+      // The last guess is the lower bound, so to have always a
+      // probability less than the necessary one
+      // if (stop()) { return m_lower; }
+      return (m_upper + m_lower) / 2;
+    } else {
+      return m_lower;
+    }
+  }
+
+  bool stop() const {
+    if (binary_search) {
+      LOG_DEBUG("[APCExponentialGuesser] Stopping condition: " << (1.0-m_lower/m_upper) << "<=" << m_gamma);
+    }
+    return binary_search && (1.0-m_lower/m_upper) <= m_gamma;
+  }
+
+private:
+  const probability_t m_p_low;
+  probability_t m_gamma;
+  probability_t m_upper;
+  probability_t m_lower;
+  probability_t m_avg_p;
+
+  bool binary_search;
+  size_t m_i;
+};
+
+
 size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
   size_t cnt = 0;
   for (const auto & v : vinfo) {
@@ -77,7 +145,7 @@ average_probability_cluster(const ugraph_t & graph,
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   probability_t reliable_estimate_lower_bound = 1.0;
-  ExtendedExponentialGuesser guesser(rate, p_low);
+  APCExponentialGuesser guesser(rate, p_low);
   size_t uncovered = n;
   double max_sum = 0.0;
 
@@ -120,15 +188,13 @@ average_probability_cluster(const ugraph_t & graph,
     LOG_INFO("Average connection probability " << prob_sum / n);
 
     if (prob_sum >= max_sum) {
-      guesser.above();
       for (ugraph_vertex_t i=0; i<n; i++) {
         valid_clustering[i] = vinfo[i];
       }
       max_sum = prob_sum;
-    } else {
-      guesser.below();
     }
-
+    guesser.update(max_sum / n);
+    
     LOG_INFO("Cache hit rate: " << std::fixed << std::setprecision(2)
              << cccache.perc_hits() << "%");
     // update the probability
