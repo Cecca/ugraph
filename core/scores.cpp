@@ -44,7 +44,7 @@ probability_t min_probability(const std::vector< ClusterVertex > & vinfo) {
 }
 
 probability_t sum_probability(const std::vector< ClusterVertex > & vinfo) {
-  probability_t sum = 1.0;
+  probability_t sum = 0.0;
   for (const auto & v : vinfo) {
     probability_t p = v.probability();
     sum += p;

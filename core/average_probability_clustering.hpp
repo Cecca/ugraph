@@ -8,6 +8,7 @@
 #include "cluster_vertex.hpp"
 #include "guesser.hpp"
 #include "counts_cache.hpp"
+#include "termcolor.hpp"
 
 class APCExponentialGuesser {
 
@@ -185,13 +186,16 @@ average_probability_cluster(const ugraph_t & graph,
 
     }
     double prob_sum = sum_center_connection_probabilities(vinfo);
-    LOG_INFO("Average connection probability " << prob_sum / n);
 
     if (prob_sum >= max_sum) {
       for (ugraph_vertex_t i=0; i<n; i++) {
         valid_clustering[i] = vinfo[i];
       }
       max_sum = prob_sum;
+      LOG_INFO("Average connection probability " <<
+               termcolor::green << prob_sum / n << termcolor::reset);
+    } else {
+      LOG_INFO("Average connection probability " << prob_sum / n);
     }
     guesser.update(max_sum / n);
     
