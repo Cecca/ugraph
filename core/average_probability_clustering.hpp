@@ -86,12 +86,13 @@ class DirectionalGuesser {
 
 public:
   DirectionalGuesser(const probability_t gamma, const probability_t p_low)
-    : m_p_low(p_low), m_gamma(gamma), m_upper(1.0), m_lower(1.0), m_max_avg_p(0.0),
+    : m_p_low(p_low), m_gamma(gamma), m_upper(1.0), m_lower(1.0),
+      m_max_avg_p(0.0), m_last_avg_p(0.0), m_second_to_last_avg_p(0.0),
       binary_search(false), direction_down(true), m_i(0) {}
 
   void update(probability_t avg_p) {
     if (binary_search) {
-      if (avg_p > m_max_avg_p) {
+      if (avg_p > m_max_avg_p || avg_p > m_last_avg_p) {
         // continue in the same direction
         m_max_avg_p = avg_p;
         LOG_INFO("[Directional Guesser] continue same direction");
@@ -106,7 +107,7 @@ public:
         m_lower = (m_upper + m_lower) / 2;
       }
     } else {
-      if (avg_p > m_max_avg_p) {
+      if (avg_p >= m_max_avg_p || m_last_avg_p) {
         m_max_avg_p = avg_p;
         m_upper = (m_i >= 2)? (1.0 - m_gamma * (1 << (m_i - 2))) : 1.0;
         m_lower = 1.0 - m_gamma * (1 << m_i);
@@ -114,7 +115,7 @@ public:
         if (m_lower <= m_p_low) {
           m_lower = m_p_low;
           binary_search = true;
-          direction_down = false;
+          direction_down = true;
           LOG_WARN("[Directional Guesser] lower bound below p_low, start search upward");
         }
       } else {
@@ -123,6 +124,8 @@ public:
         LOG_INFO("[Directional Guesser] start search upward");
       }
     }
+    m_second_to_last_avg_p = m_last_avg_p;
+    m_last_avg_p = avg_p;
   }
   
   probability_t guess() {
@@ -138,7 +141,8 @@ public:
     if (binary_search) {
       LOG_DEBUG("[APCExponentialGuesser] Stopping condition: " << (1.0-m_lower/m_upper) << "<=" << m_gamma);
     }
-    return binary_search && (1.0-m_lower/m_upper) <= m_gamma;
+    return (binary_search && (1.0-m_lower/m_upper) <= m_gamma) || (binary_search && m_last_avg_p == m_second_to_last_avg_p);
+    //return (binary_search && (1.0-m_lower/m_upper) <= m_gamma);
   }
   
 private:
@@ -147,6 +151,8 @@ private:
   probability_t m_upper;
   probability_t m_lower;
   probability_t m_max_avg_p;
+  probability_t m_last_avg_p;
+  probability_t m_second_to_last_avg_p;
 
   bool binary_search;
   bool direction_down;
@@ -169,8 +175,14 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
                             const probability_t p_curr,
                             const std::vector< ClusterVertex > & vinfo) {
   auto n = boost::num_vertices(graph);
+  // Give precedence to really uncovered nodes
   for (ugraph_vertex_t i=0; i<n; i++) {
-    if (!vinfo[i].is_covered() || vinfo[i].probability() < p_curr) {
+    if (!vinfo[i].is_covered()) {
+      return i;
+    }
+  }
+  for (ugraph_vertex_t i=0; i<n; i++) {
+    if (vinfo[i].probability() < p_curr) {
       return i;
     }
   }
@@ -184,7 +196,7 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
   size_t n = vinfo.size();
   for (ugraph_vertex_t i=0; i<n; i++) {
     if (cccache.contains(i)) {
-      if (!vinfo[i].is_covered() || vinfo[i].probability() < p_curr) {
+      if (!vinfo[i].is_covered()) {
         return i;
       } else if (vinfo[i].is_covered() && !vinfo[i].is_center()) {
         // reset counter to mark for eviction for nodes that are
@@ -193,6 +205,18 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
       }
     }
   }
+  for (ugraph_vertex_t i=0; i<n; i++) {
+    if (cccache.contains(i)) {
+      if (vinfo[i].probability() < p_curr) {
+        return i;
+      } else if (vinfo[i].is_covered() && !vinfo[i].is_center()) {
+        // reset counter to mark for eviction for nodes that are
+        // covered but are not centers.
+        cccache.set_accessed(i, 0);
+      }
+    }
+  }
+
   
   return pick_vertex(graph, p_curr, vinfo);
 }

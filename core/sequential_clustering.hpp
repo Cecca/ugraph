@@ -8,6 +8,7 @@
 #include "cluster_vertex.hpp"
 #include "guesser.hpp"
 #include "counts_cache.hpp"
+#include "termcolor.hpp"
 
 size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
   size_t cnt = 0;
@@ -117,7 +118,8 @@ sequential_cluster(const ugraph_t & graph,
       }
     }
     double prob_sum = sum_center_connection_probabilities(vinfo);
-    LOG_INFO("Sum of probability connection to centers " << prob_sum);
+    LOG_INFO("Average connection probability " <<
+             termcolor::green << (prob_sum / n) << termcolor::reset);
     // Save the snapshot of the k-median like clustering
     if (prob_sum > max_sum) {
       // get the first center, so to assign to it uncovered nodes
