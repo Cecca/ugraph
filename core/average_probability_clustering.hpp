@@ -18,14 +18,17 @@ public:
       binary_search(false), m_i(0) {}
 
   void update(probability_t avg_p) {
+    LOG_DEBUG("[APCExponentialGuesser] Updating with " << avg_p);
     if (binary_search) {
-      if (avg_p > m_avg_p) {
+      if (avg_p < m_avg_p) {
+        m_upper = (m_upper + m_lower) / 2;
+        LOG_DEBUG("[APCExponentialGuesser] Going down in binary search (new m_lower " <<
+                 m_lower << " m_avg_p " << m_avg_p << ")");
+      } else {
         m_avg_p = avg_p;
         m_lower = (m_upper + m_lower) / 2;
-        LOG_DEBUG("[APCExponentialGuesser] Below in binary search (new m_lower " << m_lower << ")");
-      } else {
-        m_upper = (m_upper + m_lower) / 2;
-        LOG_DEBUG("[APCExponentialGuesser] Above in binary search (new m_upper " << m_upper << ")");
+        LOG_DEBUG("[APCExponentialGuesser] Going up in binary search (new m_upper " <<
+                 m_upper << " m_avg_p " << m_avg_p << ")");
       }
     } else {
       // We decrease the guess until the score starts to decrease
@@ -38,10 +41,12 @@ public:
           m_lower = m_p_low;
           binary_search = true;
         }
-        LOG_DEBUG("[APCExponentialGuesser] Above in exponential search. New m_lower " << m_lower << " new m_upper " << m_upper);
+        LOG_DEBUG("[APCExponentialGuesser] Going down in exponential search. New m_lower " <<
+                 m_lower << " new m_upper " << m_upper  << " m_avg_p " << m_avg_p);
       } else {
         // As soon as avg_p decreases, we start the binary search
-        LOG_DEBUG("[APCExponentialGuesser] Below in exponential search: start binary search");
+        LOG_DEBUG("[APCExponentialGuesser] Found bottom in exponential search: start binary search" <<
+                 " m_avg_p " << m_avg_p);
         binary_search = true; // Start binary search on the next call of `guess`
       }
     }
@@ -142,7 +147,7 @@ average_probability_cluster(const ugraph_t & graph,
   std::vector< ClusterVertex > vinfo(n);
   std::vector< ClusterVertex > valid_clustering(n);
   std::vector< probability_t > probabilities(n);
-  ConnectionCountsCache cccache(std::min(k, 500ul));
+  ConnectionCountsCache cccache(std::min(k, 1000ul));
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   probability_t reliable_estimate_lower_bound = 1.0;
@@ -190,7 +195,7 @@ average_probability_cluster(const ugraph_t & graph,
     } else {
       LOG_INFO("Average connection probability " << prob_sum / n);
     }
-    guesser.update(max_sum / n);
+    guesser.update(prob_sum / n);
     
     LOG_INFO("Cache hit rate: " << std::fixed << std::setprecision(2)
              << cccache.perc_hits() << "%");
