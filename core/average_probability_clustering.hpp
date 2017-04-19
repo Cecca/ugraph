@@ -92,10 +92,12 @@ public:
 
   void update(probability_t avg_p) {
     if (binary_search) {
-      if (avg_p > m_max_avg_p || avg_p > m_last_avg_p) {
+      if (avg_p > m_max_avg_p) {
         // continue in the same direction
         m_max_avg_p = avg_p;
         LOG_INFO("[Directional Guesser] continue same direction");
+      } else if (avg_p > m_last_avg_p) {
+        LOG_INFO("[Directional Guesser] continue same direction (without updating the max)");
       } else {
         // reverse the direction
         direction_down = !direction_down;
@@ -107,7 +109,7 @@ public:
         m_lower = (m_upper + m_lower) / 2;
       }
     } else {
-      if (avg_p >= m_max_avg_p || m_last_avg_p) {
+      if (avg_p >= m_max_avg_p) {
         m_max_avg_p = avg_p;
         m_upper = (m_i >= 2)? (1.0 - m_gamma * (1 << (m_i - 2))) : 1.0;
         m_lower = 1.0 - m_gamma * (1 << m_i);
