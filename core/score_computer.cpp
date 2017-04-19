@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 
   LOG_INFO("Computing minimum probability");
   probability_t min_p = min_probability(vinfo);
-  probability_t sum_p = min_probability(vinfo);
+  probability_t sum_p = sum_probability(vinfo);
   size_t num_clusters = num_centers(vinfo);
 
   data["tables"]["scores"][0]["num clusters"] = num_clusters;
