@@ -34,6 +34,7 @@ public:
       if (m_lower <= m_p_low) {
         m_lower = m_p_low;
         binary_search = true;
+        LOG_WARN("[ExponentialGuesser] lower bound below minimum allowed probability, starting binary search");
       }
       LOG_DEBUG("[ExponentialGuesser] Above in exponential search. New m_lower " << m_lower);
     }

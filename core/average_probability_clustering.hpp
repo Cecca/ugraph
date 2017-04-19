@@ -82,6 +82,78 @@ private:
   size_t m_i;
 };
 
+class DirectionalGuesser {
+
+public:
+  DirectionalGuesser(const probability_t gamma, const probability_t p_low)
+    : m_p_low(p_low), m_gamma(gamma), m_upper(1.0), m_lower(1.0), m_max_avg_p(0.0),
+      binary_search(false), direction_down(true), m_i(0) {}
+
+  void update(probability_t avg_p) {
+    if (binary_search) {
+      if (avg_p > m_max_avg_p) {
+        // continue in the same direction
+        m_max_avg_p = avg_p;
+        LOG_INFO("[Directional Guesser] continue same direction");
+      } else {
+        // reverse the direction
+        direction_down = !direction_down;
+        LOG_INFO("[Directional Guesser] reverse direction");
+      }
+      if (direction_down) {
+        m_upper = (m_upper + m_lower) / 2;
+      } else {
+        m_lower = (m_upper + m_lower) / 2;
+      }
+    } else {
+      if (avg_p > m_max_avg_p) {
+        m_max_avg_p = avg_p;
+        m_upper = (m_i >= 2)? (1.0 - m_gamma * (1 << (m_i - 2))) : 1.0;
+        m_lower = 1.0 - m_gamma * (1 << m_i);
+        m_i++;
+        if (m_lower <= m_p_low) {
+          m_lower = m_p_low;
+          binary_search = true;
+          direction_down = false;
+          LOG_WARN("[Directional Guesser] lower bound below p_low, start search upward");
+        }
+      } else {
+        binary_search = true;
+        direction_down = false;
+        LOG_INFO("[Directional Guesser] start search upward");
+      }
+    }
+  }
+  
+  probability_t guess() {
+    REQUIRE(m_lower <= m_upper, "Upper and lower bounds inverted!");
+    if (binary_search) {
+      return (m_upper + m_lower) / 2;
+    } else {
+      return m_lower;
+    }
+  }
+  
+  bool stop() const {
+    if (binary_search) {
+      LOG_DEBUG("[APCExponentialGuesser] Stopping condition: " << (1.0-m_lower/m_upper) << "<=" << m_gamma);
+    }
+    return binary_search && (1.0-m_lower/m_upper) <= m_gamma;
+  }
+  
+private:
+  const probability_t m_p_low;
+  probability_t m_gamma;
+  probability_t m_upper;
+  probability_t m_lower;
+  probability_t m_max_avg_p;
+
+  bool binary_search;
+  bool direction_down;
+  size_t m_i;
+  
+};
+
 
 size_t count_uncovered(const std::vector< ClusterVertex > & vinfo, double p_curr) {
   size_t cnt = 0;
@@ -151,7 +223,7 @@ average_probability_cluster(const ugraph_t & graph,
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   probability_t reliable_estimate_lower_bound = 1.0;
-  APCExponentialGuesser guesser(rate, p_low);
+  DirectionalGuesser guesser(rate, p_low);
   // FIXME: Keep track of uncovered nodes
   size_t uncovered = n;
   double max_sum = 0.0;
