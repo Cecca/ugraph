@@ -78,10 +78,10 @@ private:
 };
 
 
-size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
+size_t count_uncovered(const std::vector< ClusterVertex > & vinfo, double p_curr) {
   size_t cnt = 0;
   for (const auto & v : vinfo) {
-    if (!v.is_covered()) {
+    if (!v.is_covered() || v.probability() < p_curr) {
       cnt++;
     }
   }
@@ -147,6 +147,7 @@ average_probability_cluster(const ugraph_t & graph,
   probability_t p_curr = 1.0;
   probability_t reliable_estimate_lower_bound = 1.0;
   APCExponentialGuesser guesser(rate, p_low);
+  // FIXME: Keep track of uncovered nodes
   size_t uncovered = n;
   double max_sum = 0.0;
 
@@ -155,32 +156,24 @@ average_probability_cluster(const ugraph_t & graph,
     cccache.cleanup();
     LOG_DEBUG(cccache.str());
     std::fill(vinfo.begin(), vinfo.end(), ClusterVertex());
-    uncovered = n;
     sampler.min_probability(graph, p_curr);
 
     // Build the clustering. Start the count from 1 because the
     // stopping condition is _inside_ the cycle
     for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
-      assert(uncovered == count_uncovered(vinfo));
       ugraph_vertex_t center = pick_vertex(graph, p_curr, cccache, vinfo);
-      if (!vinfo[center].is_covered()) {
-        uncovered--;
-      }
       vinfo[center].force_make_center(center);
       sampler.connection_probabilities_cache(graph, center, cccache, probabilities);
       // Cover the nodes
       for (ugraph_vertex_t i=0; i<n; i++) {
         if (probabilities[i] >= reliable_estimate_lower_bound) {
-          if (!vinfo[i].is_covered()) {
-            vinfo[i].cover(center, probabilities[i]);
-            uncovered--;
-          } else if (vinfo[i].probability() < probabilities[i]) {
+          if (!vinfo[i].is_covered() || vinfo[i].probability() < probabilities[i]) {
             vinfo[i].cover(center, probabilities[i]);
           }
         }
       }
 
-      if (uncovered == 0) {
+      if (count_uncovered(vinfo, p_curr) == 0) {
         break;
       }
 
