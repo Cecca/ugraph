@@ -52,6 +52,16 @@ probability_t sum_probability(const std::vector< ClusterVertex > & vinfo) {
   return sum;
 }
 
+size_t num_centers(const std::vector< ClusterVertex > & vinfo) {
+  size_t sum = 0;
+  for (const auto & v : vinfo) {
+    if (v.is_center()) {
+      sum++;
+    }
+  }
+  return sum;
+}
+
 double average_cluster_reliability(const ugraph_t & graph,
                                    const std::vector< std::vector<ugraph_vertex_t> > & clusters,
                                    CCSampler & sampler) {
