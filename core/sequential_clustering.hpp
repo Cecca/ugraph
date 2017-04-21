@@ -34,11 +34,35 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
                             ConnectionCountsCache & cccache,
                             const std::vector< ClusterVertex > & vinfo) {
-  int query_result = cccache.uncovered_node(vinfo);
-  if (query_result >= 0) {
-    return (ugraph_vertex_t) query_result;
+  size_t n = vinfo.size();
+  bool found_cached = false;
+  ugraph_vertex_t min_v = 0;
+  probability_t min_p = 1.0;
+  for (ugraph_vertex_t i=0; i<n; i++) {
+    if (cccache.contains(i)) {
+      if (!vinfo[i].is_covered() && vinfo[i].unreliable_probability() < min_p) {
+        min_v = i;
+        min_p = vinfo[i].unreliable_probability();
+        found_cached = true;
+      } else if (vinfo[i].is_covered() && !vinfo[i].is_center()) {
+        // reset counter to mark for eviction for nodes that are
+        // covered but are not centers.
+        cccache.set_accessed(i, 0);
+      }
+    }
+  }
+  if (found_cached) {
+    return min_v;
   } else {
-    return pick_vertex(graph, vinfo);
+    ugraph_vertex_t min_v = 0;
+    probability_t min_p = 1.0;
+    for (ugraph_vertex_t i=0; i<n; i++) {
+      if (!vinfo[i].is_covered() && vinfo[i].unreliable_probability() < min_p) {
+        min_v = i;
+        min_p = vinfo[i].unreliable_probability();
+      }
+    }
+    return min_v;
   }
 }
 
@@ -102,6 +126,8 @@ sequential_cluster(const ugraph_t & graph,
             uncovered--;
           } else if (vinfo[i].probability() < probabilities[i]) {
             vinfo[i].cover(center, probabilities[i]);
+          } else if (!vinfo[i].is_covered() && vinfo[i].unreliable_probability() < probabilities[i]) {
+            vinfo[i].unreliable_cover(center, probabilities[i]);
           }
         }
       }
