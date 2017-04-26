@@ -23,12 +23,23 @@ size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
                             const std::vector< ClusterVertex > & vinfo) {
   auto n = boost::num_vertices(graph);
+  // for (ugraph_vertex_t i=0; i<n; i++) {
+  //   if (!vinfo[i].is_covered()) {
+  //     return i;
+  //   }
+  // }
+  bool found = false;
+  ugraph_vertex_t min_v = 0;
+  probability_t min_p = 1.0;
   for (ugraph_vertex_t i=0; i<n; i++) {
-    if (!vinfo[i].is_covered()) {
-      return i;
+    if (!vinfo[i].is_covered() && vinfo[i].unreliable_probability() < min_p) {
+      found = true;
+      min_v = i;
+      min_p = vinfo[i].unreliable_probability();
     }
   }
-  throw std::logic_error("No uncovered node to select");
+  if (found) return min_v;
+  else throw std::logic_error("No uncovered node to select");
 }
 
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
@@ -114,7 +125,8 @@ sequential_cluster(const ugraph_t & graph,
     // stopping condition is _inside_ the cycle
     for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
       assert(uncovered == count_uncovered(vinfo));
-      ugraph_vertex_t center = pick_vertex(graph, cccache, vinfo);
+      //ugraph_vertex_t center = pick_vertex(graph, cccache, vinfo);
+      ugraph_vertex_t center = pick_vertex(graph, vinfo);
       vinfo[center].make_center(center);
       uncovered--;
       sampler.connection_probabilities_cache(graph, center, cccache, probabilities);
