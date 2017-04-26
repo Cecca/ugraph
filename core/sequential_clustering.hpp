@@ -20,6 +20,23 @@ size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
   return cnt;
 }
 
+ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,  
+                                Xorshift1024star & rnd,
+                                const std::vector< ClusterVertex > & vinfo) {
+  std::vector<ugraph_vertex_t> uncovered;
+  auto n = boost::num_vertices(graph);
+  for (ugraph_vertex_t i=0; i<n; i++) {
+    if (!vinfo[i].is_covered()) {
+      uncovered.push_back(i);
+    }
+  }
+  if (uncovered.size() == 0) {
+    throw std::logic_error("No uncovered node to select");
+  }
+  size_t i = (size_t) rnd.next_double()*uncovered.size();
+  return uncovered[i];
+}
+
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
                             const std::vector< ClusterVertex > & vinfo) {
   auto n = boost::num_vertices(graph);
@@ -95,6 +112,7 @@ sequential_cluster(const ugraph_t & graph,
                    const size_t slack,
                    const double rate,
                    const probability_t p_low,
+                   Xorshift1024star & rnd,
                    ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
   std::vector< ClusterVertex > vinfo(n);
@@ -125,8 +143,7 @@ sequential_cluster(const ugraph_t & graph,
     // stopping condition is _inside_ the cycle
     for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
       assert(uncovered == count_uncovered(vinfo));
-      //ugraph_vertex_t center = pick_vertex(graph, cccache, vinfo);
-      ugraph_vertex_t center = pick_vertex(graph, vinfo);
+      ugraph_vertex_t center = pick_vertex_rnd(graph, rnd, vinfo);
       vinfo[center].make_center(center);
       uncovered--;
       sampler.connection_probabilities_cache(graph, center, cccache, probabilities);

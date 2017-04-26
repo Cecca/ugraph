@@ -143,6 +143,8 @@ int main(int argc, char**argv) {
     return theory_samples_fraction/(epsilon*epsilon*p) * log(1/delta);
   };
 
+  Splitmix64 seeder(seed);
+  Xorshift1024star rnd(seeder.next());
   CCSampler sampler(graph, prob_to_samples, seed, omp_threads);
   
   std::vector<ClusterVertex> clustering;
@@ -155,12 +157,12 @@ int main(int argc, char**argv) {
     exp.tag("depth", depth);
     // Override the sampler, using the limited depth one
     BfsSampler sampler(graph, depth, prob_to_samples, seed, omp_threads);
-    auto res = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+    auto res = sequential_cluster(graph, sampler, k, slack, rate, p_low, rnd, exp);
     clustering = res.first;
     max_sum_clustering = res.second;
   } else {
     exp.tag("depth", std::numeric_limits<double>::infinity());
-    auto res = sequential_cluster(graph, sampler, k, slack, rate, p_low, exp);
+    auto res = sequential_cluster(graph, sampler, k, slack, rate, p_low, rnd, exp);
     clustering = res.first;
     max_sum_clustering = res.second;
   }
