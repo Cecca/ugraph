@@ -23,7 +23,7 @@ size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
 ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,  
                                 Xorshift1024star & rnd,
                                 ConnectionCountsCache & cccache,
-                                std::vector<ugraph_vertex_t> uncovered_scratch,
+                                std::vector<ugraph_vertex_t> & uncovered_scratch,
                                 const std::vector< ClusterVertex > & vinfo) {
   uncovered_scratch.clear();
   auto n = boost::num_vertices(graph);
