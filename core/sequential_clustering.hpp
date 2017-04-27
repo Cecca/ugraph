@@ -61,6 +61,25 @@ ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,
   return uncovered_scratch[i];
 }
 
+ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,  
+                                Xorshift1024star & rnd,
+                                ConnectionCountsCache & cccache,
+                                std::vector<ugraph_vertex_t> uncovered_scratch,
+                                const std::vector< ClusterVertex > & vinfo) {
+  uncovered_scratch.clear();
+  auto n = boost::num_vertices(graph);
+  for (ugraph_vertex_t i=0; i<n; i++) {
+    if (!vinfo[i].is_covered() && cccache.contains(i)) {
+      uncovered_scratch.push_back(i);
+    }
+  }
+  if (uncovered_scratch.size() == 0) {
+    return pick_vertex_rnd(graph, rnd, uncovered_scratch, vinfo);
+  }
+  size_t i = (size_t) std::floor(rnd.next_double()*uncovered_scratch.size());
+  return uncovered_scratch[i];
+}
+
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
                             const std::vector< ClusterVertex > & vinfo) {
   auto n = boost::num_vertices(graph);
@@ -168,7 +187,7 @@ sequential_cluster(const ugraph_t & graph,
     // stopping condition is _inside_ the cycle
     for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
       assert(uncovered == count_uncovered(vinfo));
-      ugraph_vertex_t center = pick_vertex_rnd(graph, rnd, uncovered_scratch, vinfo);
+      ugraph_vertex_t center = pick_vertex_rnd(graph, rnd, cccache, uncovered_scratch, vinfo);
       vinfo[center].make_center(center);
       uncovered--;
       sampler.connection_probabilities_cache(graph, center, cccache, probabilities);
