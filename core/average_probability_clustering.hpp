@@ -307,7 +307,11 @@ average_probability_cluster(const ugraph_t & graph,
   // Fix uncovered nodes
   // get the first center, so to assign to it uncovered nodes
   ugraph_vertex_t first_center_idx=0;
-  for (; first_center_idx<n || valid_clustering[first_center_idx].is_center(); first_center_idx++){}
+  for (; first_center_idx<n; first_center_idx++){
+    if (valid_clustering[first_center_idx].is_center()) {
+      break;
+    }
+  }
   for (ugraph_vertex_t i=0; i<n; i++) {
     if (!valid_clustering[i].is_covered()) {
       valid_clustering[i].cover(first_center_idx, 0.0);

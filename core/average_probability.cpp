@@ -79,7 +79,7 @@ void add_clustering_info(const ugraph_t &graph,
   size_t n = vinfo.size();
   for (ugraph_vertex_t v = 0; v < n; v++) {
     ugraph_vertex_t center = vinfo[v].center();
-    exp.append(table_name.c_str(), {{"id", v},
+    exp.append(table_name, {{"id", v},
                               {"center", center},
                               {"label", graph[v].label},
                               {"center label", graph[center].label},
