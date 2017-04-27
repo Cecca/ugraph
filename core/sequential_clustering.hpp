@@ -20,47 +20,6 @@ size_t count_uncovered(const std::vector< ClusterVertex > & vinfo) {
   return cnt;
 }
 
-ugraph_vertex_t pick_vertex_rnd_farthest(const ugraph_t & graph,  
-                                         Xorshift1024star & rnd,
-                                         const std::vector< ClusterVertex > & vinfo) {
-  std::vector< std::pair< probability_t, ugraph_vertex_t > > uncovered;
-  auto n = boost::num_vertices(graph);
-  for (ugraph_vertex_t i=0; i<n; i++) {
-    if (!vinfo[i].is_covered()) {
-      uncovered.emplace_back(std::make_pair(vinfo[i].unreliable_probability(), i));
-    }
-  }
-  if (uncovered.size() == 0) {
-    throw std::logic_error("No uncovered node to select");
-  }
-  std::sort(uncovered.begin(), uncovered.end());
-  size_t last_i = 0;
-  double p_min = uncovered[0].first;
-  while(uncovered[last_i].first == p_min && last_i < uncovered.size()) {
-    last_i++;
-  }
-  size_t i = (size_t) std::floor(rnd.next_double()*last_i);
-  return uncovered[i].second;
-}
-
-ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,  
-                                Xorshift1024star & rnd,
-                                std::vector<ugraph_vertex_t> uncovered_scratch,
-                                const std::vector< ClusterVertex > & vinfo) {
-  uncovered_scratch.clear();
-  auto n = boost::num_vertices(graph);
-  for (ugraph_vertex_t i=0; i<n; i++) {
-    if (!vinfo[i].is_covered()) {
-      uncovered_scratch.push_back(i);
-    }
-  }
-  if (uncovered_scratch.size() == 0) {
-    throw std::logic_error("No uncovered node to select");
-  }
-  size_t i = (size_t) std::floor(rnd.next_double()*uncovered_scratch.size());
-  return uncovered_scratch[i];
-}
-
 ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,  
                                 Xorshift1024star & rnd,
                                 ConnectionCountsCache & cccache,
@@ -69,72 +28,18 @@ ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,
   uncovered_scratch.clear();
   auto n = boost::num_vertices(graph);
   for (ugraph_vertex_t i=0; i<n; i++) {
-    if (!vinfo[i].is_covered() && cccache.contains(i)) {
+    if (!vinfo[i].is_covered()) {
       uncovered_scratch.push_back(i);
+    } else if (cccache.contains(i)) {
+      // mark the node for eviction from the cache
+      cccache.set_accessed(i, 0);
     }
   }
   if (uncovered_scratch.size() == 0) {
-    return pick_vertex_rnd(graph, rnd, uncovered_scratch, vinfo);
+    throw std::logic_error("No uncovered node to select");
   }
   size_t i = (size_t) std::floor(rnd.next_double()*uncovered_scratch.size());
   return uncovered_scratch[i];
-}
-
-ugraph_vertex_t pick_vertex(const ugraph_t & graph,
-                            const std::vector< ClusterVertex > & vinfo) {
-  auto n = boost::num_vertices(graph);
-  // for (ugraph_vertex_t i=0; i<n; i++) {
-  //   if (!vinfo[i].is_covered()) {
-  //     return i;
-  //   }
-  // }
-  bool found = false;
-  ugraph_vertex_t min_v = 0;
-  probability_t min_p = 1.0;
-  for (ugraph_vertex_t i=0; i<n; i++) {
-    if (!vinfo[i].is_covered() && vinfo[i].unreliable_probability() < min_p) {
-      found = true;
-      min_v = i;
-      min_p = vinfo[i].unreliable_probability();
-    }
-  }
-  if (found) return min_v;
-  else throw std::logic_error("No uncovered node to select");
-}
-
-ugraph_vertex_t pick_vertex(const ugraph_t & graph,
-                            ConnectionCountsCache & cccache,
-                            const std::vector< ClusterVertex > & vinfo) {
-  size_t n = vinfo.size();
-  bool found_cached = false;
-  ugraph_vertex_t min_v = 0;
-  probability_t min_p = 1.0;
-  for (ugraph_vertex_t i=0; i<n; i++) {
-    if (cccache.contains(i)) {
-      if (!vinfo[i].is_covered() && vinfo[i].unreliable_probability() < min_p) {
-        min_v = i;
-        min_p = vinfo[i].unreliable_probability();
-        found_cached = true;
-      } else if (vinfo[i].is_covered() && !vinfo[i].is_center()) {
-        // reset counter to mark for eviction for nodes that are
-        // covered but are not centers.
-        cccache.set_accessed(i, 0);
-      }
-    }
-  }
-  if (found_cached) {
-    return min_v;
-  } else {
-    ugraph_vertex_t min_v = 0;
-    probability_t min_p = 1.0;
-    for (ugraph_vertex_t i=0; i<n; i++) {
-      if (!vinfo[i].is_covered() && vinfo[i].unreliable_probability() < min_p) {
-        min_v = i;
-        min_p = vinfo[i].unreliable_probability();
-      }
-    }
-    return min_v;
-  }
 }
 
 double sum_center_connection_probabilities(const std::vector< ClusterVertex > & vinfo) {
