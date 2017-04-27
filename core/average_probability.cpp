@@ -137,11 +137,13 @@ int main(int argc, char**argv) {
     return theory_samples_fraction/(epsilon*epsilon*p) * log(1/delta);
   };
 
+  Splitmix64 seeder(seed);
+  Xorshift1024star rnd(seeder.next());
   CCSampler sampler(graph, prob_to_samples, seed, omp_threads);
   
   auto start = std::chrono::steady_clock::now();
 
-  auto clustering = average_probability_cluster(graph, sampler, k, rate, p_low, exp);
+  auto clustering = average_probability_cluster(graph, sampler, rnd, k, rate, p_low, exp);
 
   auto end = std::chrono::steady_clock::now();
   double elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();

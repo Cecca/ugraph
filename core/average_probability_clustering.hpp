@@ -191,6 +191,29 @@ ugraph_vertex_t pick_vertex(const ugraph_t & graph,
   throw std::logic_error("No uncovered node to select");
 }
 
+ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,  
+                                Xorshift1024star & rnd,
+                                ConnectionCountsCache & cccache,
+                                probability_t p_curr,
+                                std::vector<ugraph_vertex_t> & uncovered_scratch,
+                                const std::vector< ClusterVertex > & vinfo) {
+  uncovered_scratch.clear();
+  auto n = boost::num_vertices(graph);
+  for (ugraph_vertex_t i=0; i<n; i++) {
+    if (!vinfo[i].is_covered() || vinfo[i].probability() < p_curr) {
+      uncovered_scratch.push_back(i);
+    } else if (vinfo[i].is_covered() && cccache.contains(i)) {
+      // mark the node for eviction from the cache
+      cccache.set_accessed(i, 0);
+    }
+  }
+  if (uncovered_scratch.size() == 0) {
+    throw std::logic_error("No uncovered node to select");
+  }
+  size_t i = (size_t) std::floor(rnd.next_double()*uncovered_scratch.size());
+  return uncovered_scratch[i];
+}
+
 ugraph_vertex_t pick_vertex(const ugraph_t & graph,
                             const probability_t p_curr,
                             ConnectionCountsCache & cccache,
@@ -237,6 +260,7 @@ template<typename Sampler>
 std::vector< ClusterVertex >
 average_probability_cluster(const ugraph_t & graph,
                             Sampler & sampler,
+                            Xorshift1024star & rnd,
                             const size_t k,
                             const double rate,
                             const probability_t p_low,
@@ -245,6 +269,7 @@ average_probability_cluster(const ugraph_t & graph,
   std::vector< ClusterVertex > vinfo(n);
   std::vector< ClusterVertex > valid_clustering(n);
   std::vector< probability_t > probabilities(n);
+  std::vector< ugraph_vertex_t > uncovered_scratch(n);
   ConnectionCountsCache cccache(std::min(k, 1000ul));
   size_t iteration = 0;
   probability_t p_curr = 1.0;
@@ -264,7 +289,7 @@ average_probability_cluster(const ugraph_t & graph,
     // Build the clustering. Start the count from 1 because the
     // stopping condition is _inside_ the cycle
     for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
-      ugraph_vertex_t center = pick_vertex(graph, p_curr, cccache, vinfo);
+      ugraph_vertex_t center = pick_vertex_rnd(graph, rnd, cccache, p_curr, uncovered_scratch, vinfo);
       vinfo[center].force_make_center(center);
       sampler.connection_probabilities_cache(graph, center, cccache, probabilities);
       // Cover the nodes
