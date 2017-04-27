@@ -56,7 +56,7 @@ ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,
   if (uncovered.size() == 0) {
     throw std::logic_error("No uncovered node to select");
   }
-  size_t i = (size_t) rnd.next_double()*uncovered.size();
+  size_t i = (size_t) std::floor(rnd.next_double()*uncovered.size());
   return uncovered[i];
 }
 
@@ -166,7 +166,7 @@ sequential_cluster(const ugraph_t & graph,
     // stopping condition is _inside_ the cycle
     for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
       assert(uncovered == count_uncovered(vinfo));
-      ugraph_vertex_t center = pick_vertex_rnd_farthest(graph, rnd, vinfo);
+      ugraph_vertex_t center = pick_vertex_rnd(graph, rnd, vinfo);
       vinfo[center].make_center(center);
       uncovered--;
       sampler.connection_probabilities_cache(graph, center, cccache, probabilities);
