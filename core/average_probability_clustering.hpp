@@ -10,6 +10,30 @@
 #include "counts_cache.hpp"
 #include "termcolor.hpp"
 
+class UniformGuesser {
+public:
+  UniformGuesser(const probability_t gamma, const probability_t p_low)
+    : m_p_low(p_low), m_gamma(gamma), m_current(1.0), m_below(false) {}
+
+  void update(probability_t avg_p) {
+    m_current -= m_gamma;
+  }
+  
+  probability_t guess() {
+    return m_current;
+  }
+
+  bool stop() const {
+    return m_below || m_current <= m_p_low;
+  }
+
+private:
+  const probability_t m_p_low;
+  const probability_t m_gamma;
+  probability_t m_current;
+  bool m_below;
+};
+
 class APCExponentialGuesser {
 
 public:
@@ -274,7 +298,8 @@ average_probability_cluster(const ugraph_t & graph,
   size_t iteration = 0;
   probability_t p_curr = 1.0;
   probability_t reliable_estimate_lower_bound = 1.0;
-  DirectionalGuesser guesser(rate, p_low);
+  //DirectionalGuesser guesser(rate, p_low);
+  UniformGuesser guesser(rate, p_low);
   // FIXME: Keep track of uncovered nodes
   size_t uncovered = n;
   double max_sum = 0.0;
