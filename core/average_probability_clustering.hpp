@@ -347,10 +347,17 @@ average_probability_cluster(const ugraph_t & graph,
     
     LOG_INFO("Cache hit rate: " << std::fixed << std::setprecision(2)
              << cccache.perc_hits() << "%");
+
+    experiment.append("average-probability",
+                      {{"p_curr", p_curr},
+                       {"average-probability", prob_sum / n},
+                       {"iteration", iteration}});
+
     // update the probability
     p_curr = guesser.guess();
     reliable_estimate_lower_bound =
       (p_curr < reliable_estimate_lower_bound)? p_curr : reliable_estimate_lower_bound;
+
     iteration++;
   }
 
