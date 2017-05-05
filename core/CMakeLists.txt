@@ -63,6 +63,13 @@ target_link_libraries(ugraph-apc
         ${Boost_DATE_TIME_LIBRARY}
         ${Boost_PROGRAM_OPTIONS_LIBRARY})
 
+add_executable(ugraph-gmm gmm.cpp)
+target_link_libraries(ugraph-gmm
+        ugraph
+        ${Boost_SYSTEM_LIBRARY}
+        ${Boost_DATE_TIME_LIBRARY}
+        ${Boost_PROGRAM_OPTIONS_LIBRARY})
+
 add_executable(ugraph-scores score_computer.cpp)
 target_link_libraries(ugraph-scores
   ugraph
