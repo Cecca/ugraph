@@ -119,7 +119,7 @@ int main(int argc, char**argv) {
   LOG_INFO("Running with " << omp_threads << " threads");  
 
   ExperimentReporter exp;
-  exp.tag("algorithm", std::string("sequential"));
+  exp.tag("algorithm", std::string("k-center"));
   exp.tag("input", graph_path);
   exp.tag("epsilon", epsilon);
   exp.tag("delta", delta);
