@@ -209,8 +209,8 @@ int main(int argc, char **argv) {
       sampler.connection_probabilities(graph, i, probabilities);
       for (ugraph_vertex_t j = 0; j < n; j++) {
         auto & v = clustering[j];
-        if (!v.is_covered() ||
-            v.probability() <= probabilities[j]) {
+        if (gmm_clustering[j].center == i &&
+            (!v.is_covered() || v.probability() <= probabilities[j])) {
           v.cover(i, probabilities[j]);
         }
       }
