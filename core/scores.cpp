@@ -141,7 +141,6 @@ void add_scores(const ugraph_t & graph,
   probability_t sum_p = sum_probability(vinfo);
   probability_t avg_p = sum_p / boost::num_vertices(graph);
   LOG_INFO("Sum_p " << sum_p << " avg_p " << avg_p);
-  sampler.min_probability(graph, min_p);
   if (only_p_min) {
     LOG_INFO("Clustering with:" <<
              "\n\t# clusters = " << num_clusters <<
@@ -154,6 +153,7 @@ void add_scores(const ugraph_t & graph,
                        {"num clusters", num_clusters}});
     return;
   }
+  sampler.min_probability(graph, min_p);
   LOG_INFO("Computing ACR");
   double acr = average_cluster_reliability(graph, clusters, sampler);
   LOG_INFO("Computing AVPR");
