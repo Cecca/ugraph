@@ -105,7 +105,7 @@ double sum_center_connection_probabilities(const std::vector< ClusterVertex > & 
 
 template<typename Sampler>
 std::vector< ClusterVertex >
-average_probability_cluster(const ugraph_t & graph,
+average_connection_probability_clustering(const ugraph_t & graph,
                             Sampler & sampler,
                             Xorshift1024star & rnd,
                             const size_t k,
@@ -136,7 +136,7 @@ average_probability_cluster(const ugraph_t & graph,
     // Build the clustering. Start the count from 1 because the
     // stopping condition is _inside_ the cycle
     for (size_t center_cnt = 1; center_cnt < k; center_cnt++) {
-      assert(uncovered == count_uncovered(vinfo));
+      assert(uncovered == count_uncovered(vinfo, p_curr));
       ugraph_vertex_t center = pick_vertex_rnd(graph, rnd, cccache, p_curr,
                                                uncovered_scratch, vinfo);
       vinfo[center].make_center(center);

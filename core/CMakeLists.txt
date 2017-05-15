@@ -17,8 +17,8 @@ set( HEADER_FILES
   bfs_sampler.hpp
   cluster_vertex.hpp
   guesser.hpp
-  sequential_clustering.hpp
-  average_probability_clustering.hpp
+  mcpc.hpp
+  acpc.hpp
   counts_cache.hpp
 )
 
@@ -41,15 +41,15 @@ target_link_libraries(scratch
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY})
 
-add_executable(ugraph-sc sequential.cpp)
-target_link_libraries(ugraph-sc
+add_executable(ugraph-mcpc mcpc-run.cpp)
+target_link_libraries(ugraph-mcpc
   ugraph
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY})
 
-add_executable(ugraph-apc average_probability.cpp)
-target_link_libraries(ugraph-apc
+add_executable(ugraph-acpc acpc-run.cpp)
+target_link_libraries(ugraph-acpc
         ugraph
         ${Boost_SYSTEM_LIBRARY}
         ${Boost_DATE_TIME_LIBRARY}

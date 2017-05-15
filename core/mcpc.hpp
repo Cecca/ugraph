@@ -44,14 +44,14 @@ ugraph_vertex_t pick_vertex_rnd(const ugraph_t & graph,
 
 template<typename Sampler>
 std::vector< ClusterVertex >
-sequential_cluster(const ugraph_t & graph,
-                   Sampler & sampler,
-                   const size_t k,
-                   const size_t slack,
-                   const double rate,
-                   const probability_t p_low,
-                   Xorshift1024star & rnd,
-                   ExperimentReporter & experiment) {
+minimum_connection_probability_clustering(const ugraph_t & graph,
+                                          Sampler & sampler,
+                                          const size_t k,
+                                          const size_t slack,
+                                          const double rate,
+                                          const probability_t p_low,
+                                          Xorshift1024star & rnd,
+                                          ExperimentReporter & experiment) {
   const size_t n = boost::num_vertices(graph);
   std::vector< ClusterVertex > vinfo(n);
   std::vector< ClusterVertex > valid_clustering(n);

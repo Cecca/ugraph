@@ -5,7 +5,7 @@
 #include "bfs_sampler.hpp"
 #include "logging.hpp"
 #include "git_info.hpp"
-#include "sequential_clustering.hpp"
+#include "acpc.hpp"
 #include "experiment_reporter.hpp"
 #include "scores.hpp"
 
@@ -26,8 +26,6 @@ parse_args(int argc, char** argv)
      "input graph")
     ("target,k", po::value<size_t>(),
      "desired number of clusters")
-    ("slack,s", po::value<size_t>()->default_value(0),
-     "Allow a number `s` of nodes to be singletons clusters")
     ("rate,r", po::value<double>()->default_value(0.5),
      "decrease rate")
     ("depth", po::value<size_t>(), "BFS depth")
@@ -61,14 +59,13 @@ parse_args(int argc, char** argv)
   return vm;
 }
 
-void check_num_components(const ugraph_t & graph, const size_t target, const size_t slack) {
+void check_num_components(const ugraph_t & graph, const size_t target) {
   auto component_map = boost::make_vector_property_map<int>(boost::get(boost::vertex_index, graph));
   size_t num_components = boost::connected_components(graph, component_map);
-  if (target + slack < num_components) {
+  if (target < num_components) {
     LOG_ERROR("The target size ("
               << target
               << " + "
-              << slack
               << ") is smaller than the number of connected components ("
               << num_components << "): the algorithm can't terminate");
     throw std::logic_error("Target size too small");
@@ -82,7 +79,7 @@ void add_clustering_info(const ugraph_t &graph,
   size_t n = vinfo.size();
   for (ugraph_vertex_t v = 0; v < n; v++) {
     ugraph_vertex_t center = vinfo[v].center();
-    exp.append(table_name.c_str(), {{"id", v},
+    exp.append(table_name, {{"id", v},
                               {"center", center},
                               {"label", graph[v].label},
                               {"center label", graph[center].label},
@@ -111,15 +108,13 @@ int main(int argc, char**argv) {
     theory_samples_fraction = args["theory-samples-fraction"].as<double>(),
     p_low = 0.0001;
 
-  size_t
-    k = args["target"].as<size_t>(),
-    slack = args["slack"].as<size_t>();
+  size_t k = args["target"].as<size_t>();
 
   auto omp_threads = omp_get_max_threads();
   LOG_INFO("Running with " << omp_threads << " threads");  
 
   ExperimentReporter exp;
-  exp.tag("algorithm", std::string("k-center"));
+  exp.tag("algorithm", std::string("k-median"));
   exp.tag("input", graph_path);
   exp.tag("epsilon", epsilon);
   exp.tag("delta", delta);
@@ -127,7 +122,6 @@ int main(int argc, char**argv) {
   exp.tag("p_low", p_low);
   exp.tag("seed", seed);
   exp.tag("k", k);
-  exp.tag("slack", slack);
   exp.tag("git-revision", std::string(g_GIT_SHA1));
   exp.tag("theory-samples-fraction", theory_samples_fraction);
   exp.tag("num-threads", omp_threads);
@@ -137,7 +131,7 @@ int main(int argc, char**argv) {
   LOG_INFO("Loaded graph with " << boost::num_vertices(graph) <<
            " nodes and " << boost::num_edges(graph) << " edges");
 
-  check_num_components(graph, k, slack);
+  check_num_components(graph, k);
   
   auto prob_to_samples = [epsilon, delta, theory_samples_fraction](double p) {
     return theory_samples_fraction/(epsilon*epsilon*p) * log(1/delta);
@@ -147,21 +141,10 @@ int main(int argc, char**argv) {
   Xorshift1024star rnd(seeder.next());
   CCSampler sampler(graph, prob_to_samples, seed, omp_threads);
   
-  std::vector<ClusterVertex> clustering;
-  
   auto start = std::chrono::steady_clock::now();
-  
-  if (args.count("depth") > 0) {
-    size_t depth = args["depth"].as<size_t>();
-    exp.tag("depth", depth);
-    // Override the sampler, using the limited depth one
-    BfsSampler sampler(graph, depth, prob_to_samples, seed, omp_threads);
-    clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, rnd, exp);
-  } else {
-    exp.tag("depth", std::numeric_limits<double>::infinity());
-    clustering = sequential_cluster(graph, sampler, k, slack, rate, p_low, rnd, exp);
-  }
-  
+
+  auto clustering = average_connection_probability_clustering(graph, sampler, rnd, k, rate, p_low, exp);
+
   auto end = std::chrono::steady_clock::now();
   double elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
 
