@@ -18,7 +18,6 @@ set( HEADER_FILES
   cluster_vertex.hpp
   guesser.hpp
   sequential_clustering.hpp
-  concurrent_clustering.hpp
   average_probability_clustering.hpp
   counts_cache.hpp
 )
@@ -44,13 +43,6 @@ target_link_libraries(scratch
 
 add_executable(ugraph-sc sequential.cpp)
 target_link_libraries(ugraph-sc
-  ugraph
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY})
-
-add_executable(ugraph-cc concurrent.cpp)
-target_link_libraries(ugraph-cc
   ugraph
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_DATE_TIME_LIBRARY}
