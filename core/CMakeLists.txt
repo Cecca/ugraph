@@ -34,33 +34,32 @@ set( LIB_FILES
 )
 add_library(ugraph STATIC ${HEADER_FILES} ${LIB_FILES} )
 
-add_executable(scratch scratch.cpp)
-target_link_libraries(scratch
-  ugraph
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY})
-
 add_executable(ugraph-mcpc mcpc-run.cpp)
 target_link_libraries(ugraph-mcpc
   ugraph
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_IOSTREAMS_LIBRARY}
+  ${BZIP2_LIBRARIES})
 
 add_executable(ugraph-acpc acpc-run.cpp)
 target_link_libraries(ugraph-acpc
         ugraph
         ${Boost_SYSTEM_LIBRARY}
         ${Boost_DATE_TIME_LIBRARY}
-        ${Boost_PROGRAM_OPTIONS_LIBRARY})
+        ${Boost_PROGRAM_OPTIONS_LIBRARY}
+        ${Boost_IOSTREAMS_LIBRARY}
+        ${BZIP2_LIBRARIES})
 
 add_executable(ugraph-gmm gmm.cpp)
 target_link_libraries(ugraph-gmm
         ugraph
         ${Boost_SYSTEM_LIBRARY}
         ${Boost_DATE_TIME_LIBRARY}
-        ${Boost_PROGRAM_OPTIONS_LIBRARY})
+        ${Boost_PROGRAM_OPTIONS_LIBRARY}
+        ${Boost_IOSTREAMS_LIBRARY}
+        ${BZIP2_LIBRARIES})
 
 add_executable(ugraph-scores score_computer.cpp)
 target_link_libraries(ugraph-scores
@@ -68,4 +67,6 @@ target_link_libraries(ugraph-scores
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_IOSTREAMS_LIBRARY}
+  ${BZIP2_LIBRARIES})

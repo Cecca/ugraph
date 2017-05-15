@@ -4,6 +4,8 @@
 #include <fstream>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/variant.hpp>
+#include <boost/iostreams/filter/bzip2.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 #include <map>
 #include <exception>
 
@@ -87,10 +89,12 @@ public:
   }
 
   void save(const std::string &path) {
-    std::ofstream out;
-    out.open(path);
+    std::ofstream out_stream;
+    out_stream.open(path + ".bz2");
+    boost::iostreams::filtering_ostream out;
+    out.push(boost::iostreams::bzip2_compressor());
+    out.push(out_stream);
     save(out);
-    out.close();
   }
 
   void save() {
