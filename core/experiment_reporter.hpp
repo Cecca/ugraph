@@ -24,6 +24,12 @@ class ExperimentReporter {
 public:
   ExperimentReporter() : date(boost::posix_time::second_clock::local_time()) {}
 
+public:
+  static ExperimentReporter& get_instance() {
+    static ExperimentReporter instance;
+    return instance;
+  }
+  
   void tag(const std::string &key, const element_value_t &val) {
     tags[key] = val;
   }
@@ -99,3 +105,12 @@ private:
   std::map<std::string, table_t> tables;
 };
 
+
+#define EXPERIMENT_APPEND(table, ...)                           \
+  ExperimentReporter::get_instance().append(table, __VA_ARGS__)
+
+#define EXPERIMENT_TAG(key, val)                        \
+  ExperimentReporter::get_instance().tag(key, val)
+
+#define EXPERIMENT_SAVE()                       \
+  ExperimentReporter::get_instance().save()

@@ -77,12 +77,11 @@ void check_num_components(const ugraph_t & graph, const size_t target, const siz
 
 void add_clustering_info(const ugraph_t &graph,
                          const std::vector<ClusterVertex> &vinfo,
-                         const std::string & table_name,
-                         ExperimentReporter &exp) {
+                         const std::string & table_name) {
   size_t n = vinfo.size();
   for (ugraph_vertex_t v = 0; v < n; v++) {
     ugraph_vertex_t center = vinfo[v].center();
-    exp.append(table_name.c_str(), {{"id", v},
+    EXPERIMENT_APPEND(table_name.c_str(), {{"id", v},
                               {"center", center},
                               {"label", graph[v].label},
                               {"center label", graph[center].label},
@@ -118,19 +117,19 @@ int main(int argc, char**argv) {
   auto omp_threads = omp_get_max_threads();
   LOG_INFO("Running with " << omp_threads << " threads");  
 
-  ExperimentReporter exp;
-  exp.tag("algorithm", std::string("k-center"));
-  exp.tag("input", graph_path);
-  exp.tag("epsilon", epsilon);
-  exp.tag("delta", delta);
-  exp.tag("rate", rate);
-  exp.tag("p_low", p_low);
-  exp.tag("seed", seed);
-  exp.tag("k", k);
-  exp.tag("slack", slack);
-  exp.tag("git-revision", std::string(g_GIT_SHA1));
-  exp.tag("theory-samples-fraction", theory_samples_fraction);
-  exp.tag("num-threads", omp_threads);
+  
+  EXPERIMENT_TAG("algorithm", std::string("k-center"));
+  EXPERIMENT_TAG("input", graph_path);
+  EXPERIMENT_TAG("epsilon", epsilon);
+  EXPERIMENT_TAG("delta", delta);
+  EXPERIMENT_TAG("rate", rate);
+  EXPERIMENT_TAG("p_low", p_low);
+  EXPERIMENT_TAG("seed", seed);
+  EXPERIMENT_TAG("k", k);
+  EXPERIMENT_TAG("slack", slack);
+  EXPERIMENT_TAG("git-revision", std::string(g_GIT_SHA1));
+  EXPERIMENT_TAG("theory-samples-fraction", theory_samples_fraction);
+  EXPERIMENT_TAG("num-threads", omp_threads);
   
   ugraph_t graph;
   read_edge_list(graph, graph_path);
@@ -153,22 +152,22 @@ int main(int argc, char**argv) {
   
   if (args.count("depth") > 0) {
     size_t depth = args["depth"].as<size_t>();
-    exp.tag("depth", depth);
+    EXPERIMENT_TAG("depth", depth);
     // Override the sampler, using the limited depth one
     BfsSampler sampler(graph, depth, prob_to_samples, seed, omp_threads);
-    clustering = minimum_connection_probability_clustering(graph, sampler, k, slack, rate, p_low, rnd, exp);
+    clustering = minimum_connection_probability_clustering(graph, sampler, k, slack, rate, p_low, rnd);
   } else {
-    exp.tag("depth", std::numeric_limits<double>::infinity());
-    clustering = minimum_connection_probability_clustering(graph, sampler, k, slack, rate, p_low, rnd, exp);
+    EXPERIMENT_TAG("depth", std::numeric_limits<double>::infinity());
+    clustering = minimum_connection_probability_clustering(graph, sampler, k, slack, rate, p_low, rnd);
   }
   
   auto end = std::chrono::steady_clock::now();
   double elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
 
-  exp.append("performance", {{"time", elapsed},});
+  EXPERIMENT_APPEND("performance", {{"time", elapsed},});
   
-  add_clustering_info(graph, clustering, "clustering", exp);
-  add_scores(graph, clustering, sampler, args.count("fast-scores"), exp);
-  exp.save();
+  add_clustering_info(graph, clustering, "clustering");
+  add_scores(graph, clustering, sampler, args.count("fast-scores"));
+  EXPERIMENT_SAVE();
   LOG_INFO(elapsed << " ms elapsed.");
 }

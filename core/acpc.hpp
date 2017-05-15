@@ -110,8 +110,7 @@ average_connection_probability_clustering(const ugraph_t & graph,
                             Xorshift1024star & rnd,
                             const size_t k,
                             const double rate,
-                            const probability_t p_low,
-                            ExperimentReporter & experiment) {
+                            const probability_t p_low) {
 
   const size_t n = boost::num_vertices(graph);
   std::vector< ClusterVertex > vinfo(n);
@@ -188,7 +187,7 @@ average_connection_probability_clustering(const ugraph_t & graph,
       guesser.above();
     }
 
-    experiment.append("average-probability",
+    EXPERIMENT_APPEND("average-probability",
                   {{"p_curr", p_curr},
                    {"average-probability", sum_p / n},
                    {"iteration", iteration}});

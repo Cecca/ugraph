@@ -80,12 +80,11 @@ void gmm(const gmm_graph_t &g, size_t k, Xorshift1024star &rnd,
 
 void add_clustering_info(const ugraph_t &graph,
                          const std::vector<ClusterVertex> &vinfo,
-                         const std::string &table_name,
-                         ExperimentReporter &exp) {
+                         const std::string &table_name) {
   size_t n = vinfo.size();
   for (ugraph_vertex_t v = 0; v < n; v++) {
     ugraph_vertex_t center = vinfo[v].center();
-    exp.append(table_name.c_str(), {{"id", v},
+    EXPERIMENT_APPEND(table_name.c_str(), {{"id", v},
                                     {"center", center},
                                     {"label", graph[v].label},
                                     {"center label", graph[center].label},
@@ -158,17 +157,17 @@ int main(int argc, char **argv) {
   auto omp_threads = omp_get_max_threads();
   LOG_INFO("Running with " << omp_threads << " threads");
 
-  ExperimentReporter exp;
-  exp.tag("algorithm", std::string("gmm"));
-  exp.tag("input", graph_path);
-  exp.tag("p_low", p_low);
-  exp.tag("epsilon", epsilon);
-  exp.tag("delta", delta);
-  exp.tag("seed", seed);
-  exp.tag("k", k);
-  exp.tag("git-revision", std::string(g_GIT_SHA1));
-  exp.tag("theory-samples-fraction", theory_samples_fraction);
-  exp.tag("num-threads", omp_threads);
+  
+  EXPERIMENT_TAG("algorithm", std::string("gmm"));
+  EXPERIMENT_TAG("input", graph_path);
+  EXPERIMENT_TAG("p_low", p_low);
+  EXPERIMENT_TAG("epsilon", epsilon);
+  EXPERIMENT_TAG("delta", delta);
+  EXPERIMENT_TAG("seed", seed);
+  EXPERIMENT_TAG("k", k);
+  EXPERIMENT_TAG("git-revision", std::string(g_GIT_SHA1));
+  EXPERIMENT_TAG("theory-samples-fraction", theory_samples_fraction);
+  EXPERIMENT_TAG("num-threads", omp_threads);
 
   ugraph_t graph;
   read_edge_list(graph, graph_path);
@@ -194,9 +193,7 @@ int main(int argc, char **argv) {
       std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
           .count();
 
-  exp.append("performance", {
-                                {"time", elapsed},
-                            });
+  EXPERIMENT_APPEND("performance", {{"time", elapsed},});
 
   size_t n = boost::num_vertices(graph);
   std::vector<probability_t> probabilities(n);
@@ -217,8 +214,8 @@ int main(int argc, char **argv) {
     }
   }
 
-  add_clustering_info(graph, clustering, "clustering", exp);
-  add_scores(graph, clustering, sampler, args.count("fast-scores"), exp);
-  exp.save();
+  add_clustering_info(graph, clustering, "clustering");
+  add_scores(graph, clustering, sampler, args.count("fast-scores"));
+  EXPERIMENT_SAVE();
   LOG_INFO(elapsed << " ms elapsed.");
 }

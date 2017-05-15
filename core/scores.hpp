@@ -28,5 +28,4 @@ build_clusters(const std::vector< ClusterVertex > & vinfo);
 void add_scores(const ugraph_t & graph,
                 const std::vector< ClusterVertex > & vinfo,
                 CCSampler & sampler,
-                const bool only_p_min,
-                ExperimentReporter & experiment);
+                const bool only_p_min);

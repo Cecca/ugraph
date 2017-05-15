@@ -50,8 +50,7 @@ minimum_connection_probability_clustering(const ugraph_t & graph,
                                           const size_t slack,
                                           const double rate,
                                           const probability_t p_low,
-                                          Xorshift1024star & rnd,
-                                          ExperimentReporter & experiment) {
+                                          Xorshift1024star & rnd) {
   const size_t n = boost::num_vertices(graph);
   std::vector< ClusterVertex > vinfo(n);
   std::vector< ClusterVertex > valid_clustering(n);
@@ -128,10 +127,9 @@ minimum_connection_probability_clustering(const ugraph_t & graph,
     iteration++;
   }
 
-  experiment.append("algorithm-info", {{"used-slack", used_slack},
+  EXPERIMENT_APPEND("algorithm-info", {{"used-slack", used_slack},
         {"p_curr", p_curr},
-          {"best k-center iteration", best_clustering_iteration},
-            });
+          {"best k-center iteration", best_clustering_iteration},});
   return valid_clustering;
   
 }

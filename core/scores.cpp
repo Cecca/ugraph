@@ -127,8 +127,7 @@ build_clusters(const std::vector< ClusterVertex > & vinfo) {
 void add_scores(const ugraph_t & graph,
                 const std::vector< ClusterVertex > & vinfo,
                 CCSampler & sampler,
-                const bool only_p_min,
-                ExperimentReporter & experiment) {
+                const bool only_p_min) {
   std::vector< std::vector< ugraph_vertex_t > > clusters = build_clusters(vinfo);
 
   size_t num_clusters = 0;
@@ -146,7 +145,7 @@ void add_scores(const ugraph_t & graph,
              "\n\t# clusters = " << num_clusters <<
              "\n\tp_min = " << min_p <<
              "\n\taverage p = " << avg_p);
-    experiment.append("scores",
+    EXPERIMENT_APPEND("scores",
                       {{"p_min", min_p},
                        {"probabilities sum", sum_p},
                        {"average probability", avg_p},
@@ -165,7 +164,7 @@ void add_scores(const ugraph_t & graph,
            "\n\taverage p = " << avg_p <<
            "\n\tavpr  = " << avpr <<
            "\n\tacr   = " << acr);
-  experiment.append("scores", {{"acr", acr},
+  EXPERIMENT_APPEND("scores", {{"acr", acr},
                                {"p_min", min_p},
                                {"avpr", avpr},
                                {"probabilities sum", sum_p},
