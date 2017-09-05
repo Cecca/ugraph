@@ -118,7 +118,8 @@ public:
                                         const ugraph_vertex_t from,
                                         ConnectionCountsCache & cccache,
                                         std::vector< probability_t > & probabilities){
-    throw std::logic_error("Not implemented");
+    // FIXME specialize
+    connection_probabilities(graph, from, probabilities);
   }
   /** The probability that a given set of nodes is connected */
   probability_t

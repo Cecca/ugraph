@@ -147,8 +147,19 @@ int main(int argc, char**argv) {
   
   auto start = std::chrono::steady_clock::now();
 
-  auto clustering = average_connection_probability_clustering(
+  std::vector<ClusterVertex> clustering;  
+
+  if (args.count("depth") > 0) {
+    size_t depth = args["depth"].as<size_t>();
+    EXPERIMENT_TAG("depth", depth);
+    // Override the sampler, using the limited depth one
+    BfsSampler bfs_sampler(graph, depth, prob_to_samples, seed, omp_threads);
+    clustering = average_connection_probability_clustering(
+      graph, bfs_sampler, rnd, k, h, rate, p_low);
+  } else {
+    clustering = average_connection_probability_clustering(
       graph, sampler, rnd, k, h, rate, p_low);
+  }
 
   auto end = std::chrono::steady_clock::now();
   double elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
