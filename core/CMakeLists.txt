@@ -18,7 +18,6 @@ set( HEADER_FILES
   cluster_vertex.hpp
   guesser.hpp
   mcpc.hpp
-  acpc.hpp
   acpc2.hpp
   counts_cache.hpp
 )
@@ -43,15 +42,6 @@ target_link_libraries(ugraph-mcpc
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${Boost_IOSTREAMS_LIBRARY}
   ${BZIP2_LIBRARIES})
-
-add_executable(ugraph-acpc acpc-run.cpp)
-target_link_libraries(ugraph-acpc
-        ugraph
-        ${Boost_SYSTEM_LIBRARY}
-        ${Boost_DATE_TIME_LIBRARY}
-        ${Boost_PROGRAM_OPTIONS_LIBRARY}
-        ${Boost_IOSTREAMS_LIBRARY}
-        ${BZIP2_LIBRARIES})
 
 add_executable(ugraph-acpc2 acpc2-run.cpp)
 target_link_libraries(ugraph-acpc2
