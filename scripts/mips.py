@@ -6,6 +6,7 @@ import argparse
 import numpy as np
 from pprint import pprint
 import itertools
+import networkx as nx
 
 
 def remap_protein(protein):
@@ -54,10 +55,15 @@ def filter_complexes(mips_data, proteins):
 
 def build_pairs(mips_data):
     pairs = set()
+    num_pairs = 0
+    counted_pairs = 0
     for cmplx in mips_data:
         cmplx_proteins = mips_data[cmplx]
+        num_pairs += (len(cmplx_proteins) * (len(cmplx_proteins) - 1)) / 2
         for pair in itertools.combinations(cmplx_proteins, 2):
             pairs.add(tuple(sorted(pair)))
+            counted_pairs += 1
+    print(num_pairs, counted_pairs, len(pairs))
     return pairs
 
 
@@ -69,7 +75,9 @@ def main():
         metavar="FILE",
         required=True)
     argp.add_argument(
-        "--output", help="Output file", metavar="FILE", required=True)
+        "--output-ground", help="Output ground file", metavar="FILE", required=True)
+    argp.add_argument(
+        "--output-graph", help="Output graph file", metavar="FILE", required=True)
     argp.add_argument(
         "--mips",
         help="MIPS complexes database",
@@ -87,9 +95,20 @@ def main():
     print_stats(mips_filtered)
     pairs = build_pairs(mips_filtered)
     print("There are", len(pairs), "interacting pairs")
-    with open(args.output, "w") as fp:
+    ground_proteins = set()
+    for u, v in pairs:
+        ground_proteins.add(u)
+        ground_proteins.add(v)
+    valid_proteins = proteins.intersection(ground_proteins)
+    print("Intersection", len(valid_proteins))
+    with open(args.output_ground, "w") as fp:
         for p in pairs:
             fp.write("{} {}\n".format(p[0], p[1]))
+    G = nx.read_edgelist(args.ppi, data=[('probability', float)])
+    G = G.subgraph(valid_proteins)
+    with open(args.output_graph, "w") as fp:
+        for u, v, p in G.edges_iter(data='probability'):
+            fp.write("{} {} {}\n".format(u, v, p))
     
 
 
