@@ -5,7 +5,7 @@
 #include "bfs_sampler.hpp"
 #include "logging.hpp"
 #include "git_info.hpp"
-#include "acpc2.hpp"
+#include "acpc.hpp"
 #include "experiment_reporter.hpp"
 #include "scores.hpp"
 
@@ -147,7 +147,7 @@ int main(int argc, char**argv) {
   
   auto start = std::chrono::steady_clock::now();
 
-  auto clustering = average_connection_probability_clustering_2(
+  auto clustering = average_connection_probability_clustering(
       graph, sampler, rnd, k, h, rate, p_low);
 
   auto end = std::chrono::steady_clock::now();

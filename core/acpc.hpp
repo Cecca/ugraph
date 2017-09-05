@@ -99,13 +99,13 @@ ugraph_vertex_t best_center(
 
 template<typename Sampler>
 std::vector< ClusterVertex >
-average_connection_probability_clustering_2(const ugraph_t & graph,
-                                            Sampler & sampler,
-                                            Xorshift1024star & rnd,
-                                            const size_t k,
-                                            const size_t batch_centers,
-                                            const double rate,
-                                            const probability_t p_low) {
+average_connection_probability_clustering(const ugraph_t & graph,
+                                          Sampler & sampler,
+                                          Xorshift1024star & rnd,
+                                          const size_t k,
+                                          const size_t batch_centers,
+                                          const double rate,
+                                          const probability_t p_low) {
 
   // Workspace areas
   const size_t n = boost::num_vertices(graph);
