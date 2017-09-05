@@ -134,6 +134,7 @@ if __name__ == '__main__':
     args = argp.parse_args()
     
     ground_pairs = build_pairs(_load_ground(args.ground))
+    print("Loaded ground truth with", len(ground_pairs), "pairs")
     
     actual_pairs = _load_clustering(args.actual)
     result = confusion_matrix(actual_pairs, ground_pairs)
