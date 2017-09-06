@@ -27,7 +27,7 @@ def build_pairs(data):
         table = data['tables']['clustering']
     else:
         raise TypeError(
-            "Parameter of wrong type, expected either a list of clusters or a map with a 'clustering' key, was\n", data)
+            "Parameter of wrong type, expected either a list of clusters or a map with a 'clustering' key, was\n", type(data))
     # We have a list of nodes, each with clustering information
     cluster_map = dict()
     for vertex in table:
@@ -79,15 +79,17 @@ def confusion_matrix(actual_pairs, ground_pairs):
 
 def _load_ground(path):
     with open(path) as fp:
-        line_tokens = [set(l.split()) for l in fp.readlines()]
+        line_tokens = [l.split() for l in fp.readlines()]
     is_pairs = True
     for tokens in line_tokens:
         if len(tokens) != 2:
             is_pairs = False
             break
     if is_pairs:
+        print("Ground truth: `pairs` format", file=sys.stderr)
         return line_tokens
     else:
+        print("Ground truth: `one cluster per line` format", file=sys.stderr)
         return build_pairs(line_tokens)
 
 
@@ -111,19 +113,25 @@ def _load_clustering(path):
     """
     fp = _clustering_file_handle(path)
     raw = fp.read() # Read the whole thing
-    if raw[0] == '{':
+    if not isinstance(raw, str):
+        raw = raw.decode('utf-8')
+    if raw.startswith('{'):
+        print("Actual: `json` format", file=sys.stderr)
         data = json.loads(raw)
         return build_pairs(data)
     else:
-        line_tokens = [set(l.split()) for l in fp.readlines()]
+        print("Actual: `plain text` format", file=sys.stderr)
+        line_tokens = [set(l.split()) for l in raw.split("\n")]
         is_pairs = True
         for tokens in line_tokens:
             if len(tokens) != 2:
                 is_pairs = False
                 break
         if is_pairs:
+            print("Actual: `one pair per line` format", file=sys.stderr)
             return line_tokens
         else:
+            print("Actual: `one cluster per line` format", file=sys.stderr)
             return build_pairs(line_tokens)
 
 
@@ -133,10 +141,13 @@ if __name__ == '__main__':
     argp.add_argument('--ground', required=True)
     args = argp.parse_args()
     
-    ground_pairs = build_pairs(_load_ground(args.ground))
-    print("Loaded ground truth with", len(ground_pairs), "pairs")
+    print("Loading ground truth", file=sys.stderr)
+    ground_pairs = _load_ground(args.ground)
+    print("Loaded ground truth with", len(ground_pairs), "pairs", file=sys.stderr)
     
+    print("Loading actual pairs", file=sys.stderr)
     actual_pairs = _load_clustering(args.actual)
+    print("Loaded {} pairs".format(len(actual_pairs)), file=sys.stderr)
     result = confusion_matrix(actual_pairs, ground_pairs)
     json.dump(result, sys.stdout)
     print("")

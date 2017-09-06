@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-"""Reconstruct Krogan's et al ground truth."""
+"""Reconstruct Krogan's et al ground truth.
+
+You can get the file here: http://tap.med.utoronto.ca/exttap/downloads/MIPS_annotations_for_Krogan-etal_Complexes.xls"""
 
 import csv
 import sys
@@ -15,12 +17,15 @@ def load_data(path):
 def build_clusters(data):
     clusters_map = dict()
     for row in data:
-        cid = row['MIPS complex annotation']
-        protein = row['ORF']
-        if cid not in clusters_map:
-            clusters_map[cid] = [protein]
-        else:
-            clusters_map[cid].append(protein)
+        cids = row['MIPS complex annotation'].split(",")
+        for cid in cids:
+            cid = cid.strip()
+            if cid != "NOVEL":
+                protein = row['ORF']
+                if cid not in clusters_map:
+                    clusters_map[cid] = [protein]
+                else:
+                    clusters_map[cid].append(protein)
     return list(sorted(clusters_map.values(), key=len, reverse=True))
     
 
