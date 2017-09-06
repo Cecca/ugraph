@@ -119,7 +119,7 @@ def confusion_matrix(actual_pairs, ground_pairs):
         'tn': tn
     }
 
-def _load_ground(path):
+def load_ground(path):
     with open(path) as fp:
         line_tokens = [l.split() for l in fp.readlines()]
     is_pairs = True
@@ -148,7 +148,7 @@ def _clustering_file_handle(path):
     return fp
 
 
-def _load_clustering(path):
+def load_clustering(path):
     """Load a clustering as a sequence of pairs of nodes belonging to the same cluster.
     
     Works with streamed standard input, (compressed) json files, text files.
@@ -179,11 +179,11 @@ def _load_clustering(path):
 
 def confusion_matrix_paths(actual_path, ground_path):
     print("Loading ground truth", file=sys.stderr)
-    ground_pairs = _load_ground(ground_path)
+    ground_pairs = load_ground(ground_path)
     print("Loaded ground truth with", len(ground_pairs), "pairs", file=sys.stderr)
     
     print("Loading actual pairs", file=sys.stderr)
-    actual_pairs = _load_clustering(actual_path)
+    actual_pairs = load_clustering(actual_path)
     print("Loaded {} pairs".format(len(actual_pairs)), file=sys.stderr)
     result = confusion_matrix(actual_pairs, ground_pairs)
     return result
