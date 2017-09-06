@@ -23,9 +23,9 @@ def build_clusters(data):
             if cid != "NOVEL":
                 protein = row['ORF']
                 if cid not in clusters_map:
-                    clusters_map[cid] = [protein]
+                    clusters_map[cid] = {protein}
                 else:
-                    clusters_map[cid].append(protein)
+                    clusters_map[cid].add(protein)
     return list(sorted(clusters_map.values(), key=len, reverse=True))
     
 

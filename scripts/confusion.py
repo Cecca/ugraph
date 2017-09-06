@@ -13,9 +13,19 @@ import sys
 from itertools import combinations
 
 
+def _num_distinct_proteins(clusters):
+    proteins = set()
+    for cluster in clusters:
+        for p in cluster:
+            proteins.add(p)
+    return len(proteins)
+
 def build_pairs(data):
     if type(data) == list:
         clusters = data
+        print("Building pairs from", len(clusters), "clusters, comprising",
+              _num_distinct_proteins(clusters), "distinct proteins",
+              file=sys.stderr)
         pairs = set()
         for c in clusters:
             for u, v in combinations(c, 2):
@@ -41,6 +51,23 @@ def build_pairs(data):
 
 
 def confusion_matrix(actual_pairs, ground_pairs):
+    """Computes the confusion matrix of `actual_pairs` with respect to `ground_pairs`.
+
+    In the computation, only pairs with both elements contained in the ground set
+    are considered, so to have meaningful numbers.
+    """
+    proteins = set()
+    for u, v in ground_pairs:
+        proteins.add(u)
+        proteins.add(v)
+
+    filtered_actual_pairs = []
+    for u, v in actual_pairs:
+        if u in proteins and v in proteins:
+            filtered_actual_pairs.append((u, v))
+    actual_pairs = filtered_actual_pairs
+    print("Filtered pairs are", len(actual_pairs), file=sys.stderr)
+
     tp = 0
     fp = 0
     tn = 0
@@ -57,14 +84,14 @@ def confusion_matrix(actual_pairs, ground_pairs):
             fn += 1
 
     positives = len(ground_pairs)
-    proteins = set()
-    for u, v in ground_pairs:
-        proteins.add(u)
-        proteins.add(v)
     possible_pairs = len(proteins)*(len(proteins)-1)/2
+    print("possible pairs are", possible_pairs, file=sys.stderr)
     negatives = possible_pairs - positives
 
     tn = negatives - fp
+
+    assert positives == tp + fn
+    assert negatives == fp + tn
 
     return {
         'tpr': tp / positives,
@@ -135,19 +162,24 @@ def _load_clustering(path):
             return build_pairs(line_tokens)
 
 
+def confusion_matrix_paths(actual_path, ground_path):
+    print("Loading ground truth", file=sys.stderr)
+    ground_pairs = _load_ground(ground_path)
+    print("Loaded ground truth with", len(ground_pairs), "pairs", file=sys.stderr)
+    
+    print("Loading actual pairs", file=sys.stderr)
+    actual_pairs = _load_clustering(actual_path)
+    print("Loaded {} pairs".format(len(actual_pairs)), file=sys.stderr)
+    result = confusion_matrix(actual_pairs, ground_pairs)
+    return result
+
+
 if __name__ == '__main__':
     argp = argparse.ArgumentParser()
     argp.add_argument('--actual', required=False, default=None)
     argp.add_argument('--ground', required=True)
     args = argp.parse_args()
-    
-    print("Loading ground truth", file=sys.stderr)
-    ground_pairs = _load_ground(args.ground)
-    print("Loaded ground truth with", len(ground_pairs), "pairs", file=sys.stderr)
-    
-    print("Loading actual pairs", file=sys.stderr)
-    actual_pairs = _load_clustering(args.actual)
-    print("Loaded {} pairs".format(len(actual_pairs)), file=sys.stderr)
-    result = confusion_matrix(actual_pairs, ground_pairs)
+    result = confusion_matrix_paths(args.actual, args.ground)
     json.dump(result, sys.stdout)
     print("")
+    
