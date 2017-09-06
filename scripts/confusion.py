@@ -53,20 +53,35 @@ def build_pairs(data):
 def confusion_matrix(actual_pairs, ground_pairs):
     """Computes the confusion matrix of `actual_pairs` with respect to `ground_pairs`.
 
-    In the computation, only pairs with both elements contained in the ground set
-    are considered, so to have meaningful numbers.
+    In the computation, only pairs with both elements contained in bpth the ground set
+    and the input graph are considered, so to have meaningful numbers.
     """
-    proteins = set()
+    ground_proteins = set()
     for u, v in ground_pairs:
-        proteins.add(u)
-        proteins.add(v)
+        ground_proteins.add(u)
+        ground_proteins.add(v)
+    print("Ground proteins:", len(ground_proteins), file=sys.stderr)
+    actual_proteins = set()
+    for u, v in actual_pairs:
+        actual_proteins.add(u)
+        actual_proteins.add(v)
+    print("Actual proteins:", len(actual_proteins), file=sys.stderr)
+
+    proteins = ground_proteins.intersection(actual_proteins)
+    print("Intersection proteins:", len(proteins), file=sys.stderr)    
 
     filtered_actual_pairs = []
     for u, v in actual_pairs:
         if u in proteins and v in proteins:
             filtered_actual_pairs.append((u, v))
     actual_pairs = filtered_actual_pairs
-    print("Filtered pairs are", len(actual_pairs), file=sys.stderr)
+    print("Filtered actual pairs are", len(actual_pairs), file=sys.stderr)
+    filtered_ground_pairs = []
+    for u, v in ground_pairs:
+        if u in proteins and v in proteins:
+            filtered_ground_pairs.append((u, v))
+    ground_pairs = filtered_ground_pairs
+    print("Filtered ground pairs are", len(ground_pairs), file=sys.stderr)
 
     tp = 0
     fp = 0
