@@ -82,7 +82,7 @@ double average_cluster_reliability(const ugraph_t & graph,
   return acr;
 }
 
-double average_vertex_pairwise_reliability_new(const ugraph_t & graph,
+double average_vertex_pairwise_reliability(const ugraph_t & graph,
             const std::vector<ClusterVertex> & vinfo,
             CCSampler & sampler) {
   // Instead of looking at the connection probabilities of single
@@ -90,6 +90,7 @@ double average_vertex_pairwise_reliability_new(const ugraph_t & graph,
   // for each cluster, we add (x \choose 2) to the counter of that
   // cluster, where x is the size of the intersection of the cluster
   // with a connected component of the sample.
+  LOG_INFO("HERE");
 
   // First, map cluster centers to contiguous identifiers
   std::unordered_map<ugraph_vertex_t, size_t> cluster_ids;
@@ -183,7 +184,7 @@ double average_vertex_pairwise_reliability_new(const ugraph_t & graph,
   return numerator / denominator;
 }
 
-double average_vertex_pairwise_reliability(const ugraph_t & graph,
+double average_vertex_pairwise_reliability_old(const ugraph_t & graph,
                                            std::vector<std::vector<ugraph_vertex_t> > & clusters,
                                            CCSampler & sampler) {
   std::vector< probability_t > probabilities(boost::num_vertices(graph), 0.0);
@@ -256,17 +257,14 @@ void add_scores(const ugraph_t & graph,
   sampler.min_probability(graph, min_p);
   LOG_INFO("Computing ACR");
   double acr = average_cluster_reliability(graph, clusters, sampler);
-  LOG_INFO("Computing AVPR with new method");
-  double avpr_new_method = average_vertex_pairwise_reliability_new(graph, vinfo, sampler);
   LOG_INFO("Computing AVPR");
-  double avpr = average_vertex_pairwise_reliability(graph, clusters, sampler);
-  
+  double avpr = average_vertex_pairwise_reliability(graph, vinfo, sampler);
+    
   LOG_INFO("Clustering with:" <<
            "\n\t# clusters = " << num_clusters << 
            "\n\tp_min = " << min_p <<
            "\n\taverage p = " << avg_p <<
            "\n\tavpr      = " << avpr <<
-           "\n\tavpr_new  = " << avpr_new_method <<
            "\n\tacr   = " << acr);
   EXPERIMENT_APPEND("scores", {{"acr", acr},
                                {"p_min", min_p},

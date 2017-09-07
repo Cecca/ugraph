@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
     LOG_INFO("Computing ACR");
     double acr = average_cluster_reliability(graph, clusters, sampler);
     LOG_INFO("Computing AVPR");
-    double avpr = average_vertex_pairwise_reliability(graph, clusters, sampler);
+    double avpr = average_vertex_pairwise_reliability(graph, vinfo, sampler);
     data["tables"]["scores"][0]["acr"] = acr;
     data["tables"]["scores"][0]["avpr"] = avpr;
   }
