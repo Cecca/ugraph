@@ -18,9 +18,15 @@ double average_cluster_reliability(const ugraph_t & graph,
                                    const std::vector< std::vector<ugraph_vertex_t> > & clusters,
                                    CCSampler & sampler);
 
+// Deprecated
 double average_vertex_pairwise_reliability(const ugraph_t & graph,
                                            std::vector<std::vector<ugraph_vertex_t> > & clusters,
                                            CCSampler & sampler);
+
+/// Computes the Average Vertex Pairwise Reliability
+double avpr(const ugraph_t & graph,
+            const std::vector<ClusterVertex> & vinfo,
+            CCSampler & sampler);
 
 std::vector< std::vector< ugraph_vertex_t > >
 build_clusters(const std::vector< ClusterVertex > & vinfo);

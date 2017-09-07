@@ -82,6 +82,95 @@ double average_cluster_reliability(const ugraph_t & graph,
   return acr;
 }
 
+double avpr(const ugraph_t & graph,
+            const std::vector<ClusterVertex> & vinfo,
+            CCSampler & sampler) {
+  // Instead of looking at the connection probabilities of single
+  // pairs, we consider the connected components of each sample and,
+  // for each cluster, we add (x \choose 2) to the counter of that
+  // cluster, where x is the size of the intersection of the cluster
+  // with a connected component of the sample.
+
+  // First, map cluster centers to contiguous identifiers
+  std::unordered_map<ugraph_vertex_t, size_t> cluster_ids;
+  size_t cur_id = 0;
+  for (const auto & v : vinfo) {
+    if (v.is_center()) {
+      cluster_ids[v.center()] = cur_id++;
+    }
+  }
+  const size_t n = vinfo.size();
+  const size_t n_clusters = cluster_ids.size();
+
+  const size_t n_threads = omp_get_max_threads();
+  
+  // The vectors that will hold the counts for the clusters, one for
+  // each thread
+  std::vector<std::vector<size_t>> t_cluster_counts(n_threads,
+                                                    std::vector<size_t>(n_clusters));
+  // The samples
+  const std::vector<CCSampler::component_vector_t> &samples = sampler.get_samples();
+  const size_t n_samples = samples.size();
+
+  // For each sample in parallel, accumulate counts
+#pragma omp parallel for
+  for(size_t sample_idx=0; sample_idx < n_samples; sample_idx++){
+    const auto & sample = samples[sample_idx];
+    REQUIRE(sample.size() == n, "Samples are of the wrong size!");
+    const size_t num_connected_components =
+      *(std::max_element(sample.cbegin(), sample.cend()));
+    LOG_INFO("There are " << num_connected_components << " connected components");
+    const auto tid = omp_get_thread_num();
+    auto& cluster_counts = t_cluster_counts[tid];
+
+    // A matrix of `num_clusters` x `num_components elements that
+    // contains in element (i,j) the number of elements of cluster i
+    // belonging to the connected component j.
+    std::vector<std::vector<size_t>> intersection_sizes(
+        n_clusters, std::vector<size_t>(num_connected_components));
+
+    for (size_t i=0; i<n; i++) {
+      const size_t cluster_id = cluster_ids[vinfo[i].center()];
+      const size_t component_id = sample[i];
+      intersection_sizes[cluster_id][component_id]++;
+    }
+
+    for (size_t cluster_idx=0; cluster_idx<n_clusters; cluster_idx++) {
+      size_t cnt=0;
+      const auto & sizes = intersection_sizes[cluster_idx];
+      // TODO: Apply SIMD reduction
+      for (size_t component_idx=0; component_idx<num_connected_components; component_idx++){
+        size_t intersection = sizes[component_idx];
+        cnt += intersection*(intersection-1)/2;
+      }
+      cluster_counts[cluster_idx] += cnt;
+    }
+  }
+
+  double numerator = 0.0;
+  for (const auto & cnts : t_cluster_counts) {
+    for (const size_t cnt : cnts) {
+      numerator += (((double) cnt) / n_samples);
+    }
+  }
+  std::unordered_map<ugraph_vertex_t, size_t> cluster_sizes;
+  for(const auto & v: vinfo) {
+    ugraph_vertex_t center = v.center();
+    if (cluster_sizes.count(center) == 0) {
+      cluster_sizes[center] = 1;
+    } else {
+      cluster_sizes[center]++;
+    }
+  }
+  double denominator = 0.0;
+  for(const auto & cs : cluster_sizes) {
+    size_t size = cs.second;
+    denominator += (size*(size-1))/2.0;
+  }
+  
+  return numerator / denominator;
+}
+
 double average_vertex_pairwise_reliability(const ugraph_t & graph,
                                            std::vector<std::vector<ugraph_vertex_t> > & clusters,
                                            CCSampler & sampler) {

@@ -76,6 +76,10 @@ public:
     }
   }
   
+  const std::vector< component_vector_t > & get_samples() const {
+    return m_samples;
+  }
+
   size_t connection_probabilities(const ugraph_t & graph,
                                   const ugraph_vertex_t from,
                                   std::vector< probability_t > & probabilities);
