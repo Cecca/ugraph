@@ -90,7 +90,6 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
   // for each cluster, we add (x \choose 2) to the counter of that
   // cluster, where x is the size of the intersection of the cluster
   // with a connected component of the sample.
-  LOG_INFO("HERE");
 
   // First, map cluster centers to contiguous identifiers
   std::unordered_map<ugraph_vertex_t, size_t> cluster_ids;
