@@ -1,3 +1,5 @@
 /build
 include
 .peru
+.vscode
+__pycache__
