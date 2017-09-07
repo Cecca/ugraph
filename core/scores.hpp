@@ -24,7 +24,7 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
                                            CCSampler & sampler);
 
 /// Computes the Average Vertex Pairwise Reliability
-double avpr(const ugraph_t & graph,
+double average_vertex_pairwise_reliability_new(const ugraph_t & graph,
             const std::vector<ClusterVertex> & vinfo,
             CCSampler & sampler);
 

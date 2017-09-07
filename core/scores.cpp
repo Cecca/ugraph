@@ -82,7 +82,7 @@ double average_cluster_reliability(const ugraph_t & graph,
   return acr;
 }
 
-double avpr(const ugraph_t & graph,
+double average_vertex_pairwise_reliability_new(const ugraph_t & graph,
             const std::vector<ClusterVertex> & vinfo,
             CCSampler & sampler) {
   // Instead of looking at the connection probabilities of single
@@ -107,34 +107,46 @@ double avpr(const ugraph_t & graph,
   // The vectors that will hold the counts for the clusters, one for
   // each thread
   std::vector<std::vector<size_t>> t_cluster_counts(n_threads,
-                                                    std::vector<size_t>(n_clusters));
+                                                    std::vector<size_t>(n_clusters, 0));
   // The samples
   const std::vector<CCSampler::component_vector_t> &samples = sampler.get_samples();
   const size_t n_samples = samples.size();
-
+  
   // For each sample in parallel, accumulate counts
 #pragma omp parallel for
   for(size_t sample_idx=0; sample_idx < n_samples; sample_idx++){
     const auto & sample = samples[sample_idx];
     REQUIRE(sample.size() == n, "Samples are of the wrong size!");
-    const size_t num_connected_components =
-      *(std::max_element(sample.cbegin(), sample.cend()));
-    LOG_INFO("There are " << num_connected_components << " connected components");
+    std::unordered_map<size_t, size_t> connected_components_ids;
+    size_t cur_comp_id = 0;
+    for(const auto cc_id : sample) {
+      if (connected_components_ids.count(cc_id) == 0) {
+        connected_components_ids[cc_id] = cur_comp_id++;
+      }
+    }
+    const size_t num_connected_components = connected_components_ids.size();
+
     const auto tid = omp_get_thread_num();
     auto& cluster_counts = t_cluster_counts[tid];
 
     // A matrix of `num_clusters` x `num_components elements that
     // contains in element (i,j) the number of elements of cluster i
     // belonging to the connected component j.
-    std::vector<std::vector<size_t>> intersection_sizes(
-        n_clusters, std::vector<size_t>(num_connected_components));
+    std::vector<std::vector<size_t>> intersection_sizes;
+    for (size_t i=0; i<n_clusters; i++) {
+      std::vector<size_t> vec;
+      for(size_t j=0; j<num_connected_components; j++) {
+        vec.push_back(0);
+      }
+      intersection_sizes.push_back(vec);
+    }
 
     for (size_t i=0; i<n; i++) {
       const size_t cluster_id = cluster_ids[vinfo[i].center()];
-      const size_t component_id = sample[i];
-      intersection_sizes[cluster_id][component_id]++;
+      const size_t component_id = connected_components_ids[sample[i]];
+      intersection_sizes.at(cluster_id).at(component_id)++;
     }
-
+    
     for (size_t cluster_idx=0; cluster_idx<n_clusters; cluster_idx++) {
       size_t cnt=0;
       const auto & sizes = intersection_sizes[cluster_idx];
@@ -244,14 +256,17 @@ void add_scores(const ugraph_t & graph,
   sampler.min_probability(graph, min_p);
   LOG_INFO("Computing ACR");
   double acr = average_cluster_reliability(graph, clusters, sampler);
+  LOG_INFO("Computing AVPR with new method");
+  double avpr_new_method = average_vertex_pairwise_reliability_new(graph, vinfo, sampler);
   LOG_INFO("Computing AVPR");
   double avpr = average_vertex_pairwise_reliability(graph, clusters, sampler);
-
+  
   LOG_INFO("Clustering with:" <<
            "\n\t# clusters = " << num_clusters << 
            "\n\tp_min = " << min_p <<
            "\n\taverage p = " << avg_p <<
-           "\n\tavpr  = " << avpr <<
+           "\n\tavpr      = " << avpr <<
+           "\n\tavpr_new  = " << avpr_new_method <<
            "\n\tacr   = " << acr);
   EXPERIMENT_APPEND("scores", {{"acr", acr},
                                {"p_min", min_p},
