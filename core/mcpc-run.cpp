@@ -39,7 +39,8 @@ parse_args(int argc, char** argv)
      "Fraction of samples to be used with respect to the theory-defined formula")
     ("seed", po::value<uint64_t>(),
      "seed for random generator")
-    ("fast-scores", "compute only fast-to-compute scores");
+    ("with-acr", "also compute ACR measure")
+    ("with-avpr", "also compute AVPR");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -167,7 +168,7 @@ int main(int argc, char**argv) {
   EXPERIMENT_APPEND("performance", {{"time", elapsed},});
   
   add_clustering_info(graph, clustering, "clustering");
-  add_scores(graph, clustering, sampler, args.count("fast-scores"));
+  add_scores(graph, clustering, sampler, args.count("with-acr") > 0, args.count("with-avpr") > 0);
   EXPERIMENT_SAVE();
   LOG_INFO(elapsed << " ms elapsed.");
 }

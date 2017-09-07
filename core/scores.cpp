@@ -228,7 +228,8 @@ build_clusters(const std::vector< ClusterVertex > & vinfo) {
 void add_scores(const ugraph_t & graph,
                 const std::vector< ClusterVertex > & vinfo,
                 CCSampler & sampler,
-                const bool only_p_min) {
+                const bool with_acr,
+                const bool with_avpr) {
   std::vector< std::vector< ugraph_vertex_t > > clusters = build_clusters(vinfo);
 
   size_t num_clusters = 0;
@@ -241,23 +242,18 @@ void add_scores(const ugraph_t & graph,
   probability_t sum_p = sum_probability(vinfo);
   probability_t avg_p = sum_p / boost::num_vertices(graph);
   LOG_INFO("Sum_p " << sum_p << " avg_p " << avg_p);
-  if (only_p_min) {
-    LOG_INFO("Clustering with:" <<
-             "\n\t# clusters = " << num_clusters <<
-             "\n\tp_min = " << min_p <<
-             "\n\taverage p = " << avg_p);
-    EXPERIMENT_APPEND("scores",
-                      {{"p_min", min_p},
-                       {"probabilities sum", sum_p},
-                       {"average probability", avg_p},
-                       {"num clusters", num_clusters}});
-    return;
+    
+  double acr=-1, avpr=-1;
+  if (with_acr) {
+    sampler.min_probability(graph, min_p);
+    LOG_INFO("Computing ACR");
+    acr = average_cluster_reliability(graph, clusters, sampler);
   }
-  sampler.min_probability(graph, min_p);
-  LOG_INFO("Computing ACR");
-  double acr = average_cluster_reliability(graph, clusters, sampler);
-  LOG_INFO("Computing AVPR");
-  double avpr = average_vertex_pairwise_reliability(graph, vinfo, sampler);
+  if (with_avpr) {
+    sampler.min_probability(graph, min_p);
+    LOG_INFO("Computing AVPR");
+    avpr = average_vertex_pairwise_reliability(graph, vinfo, sampler);
+  }
     
   LOG_INFO("Clustering with:" <<
            "\n\t# clusters = " << num_clusters << 
