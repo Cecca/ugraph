@@ -50,25 +50,25 @@ def build_pairs(data):
     return build_pairs(list(cluster_map.values()))
 
 
-def confusion_matrix(actual_pairs, ground_pairs):
+def confusion_matrix(actual_pairs, ground_pairs, proteins):
     """Computes the confusion matrix of `actual_pairs` with respect to `ground_pairs`.
 
     In the computation, only pairs with both elements contained in bpth the ground set
     and the input graph are considered, so to have meaningful numbers.
     """
-    ground_proteins = set()
-    for u, v in ground_pairs:
-        ground_proteins.add(u)
-        ground_proteins.add(v)
-    print("Ground proteins:", len(ground_proteins), file=sys.stderr)
-    actual_proteins = set()
-    for u, v in actual_pairs:
-        actual_proteins.add(u)
-        actual_proteins.add(v)
-    print("Actual proteins:", len(actual_proteins), file=sys.stderr)
+    # ground_proteins = set()
+    # for u, v in ground_pairs:
+    #     ground_proteins.add(u)
+    #     ground_proteins.add(v)
+    # print("Ground proteins:", len(ground_proteins), file=sys.stderr)
+    # actual_proteins = set()
+    # for u, v in actual_pairs:
+    #     actual_proteins.add(u)
+    #     actual_proteins.add(v)
+    # print("Actual proteins:", len(actual_proteins), file=sys.stderr)
 
-    proteins = ground_proteins.intersection(actual_proteins)
-    print("Intersection proteins:", len(proteins), file=sys.stderr)    
+    # proteins = ground_proteins.intersection(actual_proteins)
+    # print("Intersection proteins:", len(proteins), file=sys.stderr)    
 
     filtered_actual_pairs = []
     for u, v in actual_pairs:
@@ -76,12 +76,12 @@ def confusion_matrix(actual_pairs, ground_pairs):
             filtered_actual_pairs.append((u, v))
     actual_pairs = filtered_actual_pairs
     print("Filtered actual pairs are", len(actual_pairs), file=sys.stderr)
-    filtered_ground_pairs = []
-    for u, v in ground_pairs:
-        if u in proteins and v in proteins:
-            filtered_ground_pairs.append((u, v))
-    ground_pairs = filtered_ground_pairs
-    print("Filtered ground pairs are", len(ground_pairs), file=sys.stderr)
+    # filtered_ground_pairs = []
+    # for u, v in ground_pairs:
+    #     if u in proteins and v in proteins:
+    #         filtered_ground_pairs.append((u, v))
+    # ground_pairs = filtered_ground_pairs
+    # print("Filtered ground pairs are", len(ground_pairs), file=sys.stderr)
 
     tp = 0
     fp = 0
@@ -100,11 +100,16 @@ def confusion_matrix(actual_pairs, ground_pairs):
 
     positives = len(ground_pairs)
     possible_pairs = len(proteins)*(len(proteins)-1)/2
-    print("possible pairs are", possible_pairs, file=sys.stderr)
+    print("possible pairs are", possible_pairs, "predicted pairs are", len(actual_pairs),
+          file=sys.stderr)
     negatives = possible_pairs - positives
 
     tn = negatives - fp
 
+    assert tn >= 0
+    assert tp >= 0
+    assert fn >= 0
+    assert fp >= 0
     assert positives == tp + fn
     assert negatives == fp + tn
 
@@ -123,16 +128,18 @@ def load_ground(path):
     with open(path) as fp:
         line_tokens = [l.split() for l in fp.readlines()]
     is_pairs = True
+    proteins = set()
     for tokens in line_tokens:
         if len(tokens) != 2:
             is_pairs = False
-            break
+        for t in tokens:
+            proteins.add(t)
     if is_pairs:
         print("Ground truth: `pairs` format", file=sys.stderr)
-        return line_tokens
+        return line_tokens, proteins
     else:
         print("Ground truth: `one cluster per line` format", file=sys.stderr)
-        return build_pairs(line_tokens)
+        return build_pairs(line_tokens), proteins
 
 
 def _clustering_file_handle(path):
@@ -179,13 +186,13 @@ def load_clustering(path):
 
 def confusion_matrix_paths(actual_path, ground_path):
     print("Loading ground truth", file=sys.stderr)
-    ground_pairs = load_ground(ground_path)
+    ground_pairs, proteins = load_ground(ground_path)
     print("Loaded ground truth with", len(ground_pairs), "pairs", file=sys.stderr)
     
     print("Loading actual pairs", file=sys.stderr)
     actual_pairs = load_clustering(actual_path)
     print("Loaded {} pairs".format(len(actual_pairs)), file=sys.stderr)
-    result = confusion_matrix(actual_pairs, ground_pairs)
+    result = confusion_matrix(actual_pairs, ground_pairs, proteins)
     return result
 
 
