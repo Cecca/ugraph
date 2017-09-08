@@ -91,6 +91,8 @@ AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
   // cluster, where x is the size of the intersection of the cluster
   // with a connected component of the sample.
 
+  const size_t n = vinfo.size();
+  
   // First, map cluster centers to contiguous identifiers
   std::unordered_map<ugraph_vertex_t, size_t> cluster_ids;
   size_t cur_id = 0;
@@ -99,9 +101,13 @@ AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
       cluster_ids[v.center()] = cur_id++;
     }
   }
-  const size_t n = vinfo.size();
   const size_t n_clusters = cluster_ids.size();
-
+  std::vector<size_t> cluster_sizes(n_clusters, 0);
+  for(const auto & v: vinfo) {
+    ugraph_vertex_t center = v.center();
+    cluster_sizes[cluster_ids[center]]++;
+  }
+  
   const size_t n_threads = omp_get_max_threads();
   
   // The vectors that will hold the counts for the clusters, one for
@@ -174,19 +180,31 @@ AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
       size_t inner_cnt=0;
       size_t outer_cnt=0;
       const auto & i_sizes = intersection_sizes[cluster_idx];
-      const auto & d_sizes = difference_sizes[cluster_idx];
+      //const auto & d_sizes = difference_sizes[cluster_idx]; FIXME DEAD CODE!
       // TODO: Apply SIMD reduction
       for (size_t component_idx=0; component_idx<num_connected_components; component_idx++){
         size_t intersection = i_sizes[component_idx];
-        size_t difference = d_sizes[component_idx];
+        size_t difference = connected_components_sizes[component_idx] - intersection;
         inner_cnt += intersection*(intersection-1)/2;
-        outer_cnt += intersection*difference;
+        size_t outer_pairs = intersection*difference;
+        size_t max_pairs = cluster_sizes[cluster_idx]*connected_components_sizes[component_idx];
+        outer_cnt += outer_pairs;
       }
       cluster_inner_counts[cluster_idx] += inner_cnt;
       cluster_outer_counts[cluster_idx] += outer_cnt;
     }
   }
 
+  double inner_denominator = 0.0;
+  for(const auto & size : cluster_sizes) {
+    inner_denominator += (size*(size-1))/2.0;
+  }
+  double outer_denominator = 0.0;
+  for(const auto in_cluster_size : cluster_sizes) {
+    size_t out_cluster_size = n - in_cluster_size;
+    outer_denominator += in_cluster_size*out_cluster_size;
+  }
+  
   double inner_numerator = 0.0;
   double outer_numerator = 0.0;
   for (const auto & cnts : t_cluster_inner_counts) {
@@ -199,24 +217,11 @@ AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
       outer_numerator += (((double) cnt) / n_samples);
     }
   }
-  std::unordered_map<ugraph_vertex_t, size_t> cluster_sizes;
-  for(const auto & v: vinfo) {
-    ugraph_vertex_t center = v.center();
-    if (cluster_sizes.count(center) == 0) {
-      cluster_sizes[center] = 1;
-    } else {
-      cluster_sizes[center]++;
-    }
-  }
-  double inner_denominator = 0.0;
-  for(const auto & cs : cluster_sizes) {
-    size_t size = cs.second;
-    inner_denominator += (size*(size-1))/2.0;
-  }
-  double outer_denominator = (n*(n-1))/2.0 - inner_denominator;
   AVPR avpr;
   avpr.inner = inner_numerator / inner_denominator;
   avpr.outer = outer_numerator / outer_denominator;
+  REQUIRE(avpr.inner <= 1.0, "Inner AVPR must be smaller than 1");
+  REQUIRE(avpr.outer <= 1.0, "Outer AVPR must be smaller than 1");
   return avpr;
 }
 
