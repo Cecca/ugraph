@@ -160,27 +160,11 @@ AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
       const size_t component_id = connected_components_ids[sample[i]];
       intersection_sizes.at(cluster_id).at(component_id)++;
     }
-
-    
-    // A matrix of `num_clusters` x `num_components` elements that
-    // contains in element (i,j) the number of elements of connected
-    // component j *not* belonging to cluster i.
-    std::vector<std::vector<size_t>> difference_sizes(
-        n_clusters, std::vector<size_t>(num_connected_components, 0ul));
-
-    // Compute the size of the difference as the size of the connected
-    // component minus the size of the intersection
-    for (size_t i=0; i<n_clusters; i++) {
-      for(size_t j=0; j<num_connected_components; j++) {
-        difference_sizes[i][j] = connected_components_sizes[j] - intersection_sizes[i][j];
-      }
-    }
     
     for (size_t cluster_idx=0; cluster_idx<n_clusters; cluster_idx++) {
       size_t inner_cnt=0;
       size_t outer_cnt=0;
       const auto & i_sizes = intersection_sizes[cluster_idx];
-      //const auto & d_sizes = difference_sizes[cluster_idx]; FIXME DEAD CODE!
       // TODO: Apply SIMD reduction
       for (size_t component_idx=0; component_idx<num_connected_components; component_idx++){
         size_t intersection = i_sizes[component_idx];
