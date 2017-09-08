@@ -106,8 +106,10 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
   
   // The vectors that will hold the counts for the clusters, one for
   // each thread
-  std::vector<std::vector<size_t>> t_cluster_counts(n_threads,
-                                                    std::vector<size_t>(n_clusters, 0));
+  std::vector<std::vector<size_t>> t_cluster_inner_counts(
+      n_threads, std::vector<size_t>(n_clusters, 0));
+  std::vector<std::vector<size_t>> t_cluster_outer_counts(
+      n_threads, std::vector<size_t>(n_clusters, 0));
   // The samples
   const std::vector<CCSampler::component_vector_t> &samples = sampler.get_samples();
   const size_t n_samples = samples.size();
@@ -120,16 +122,22 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
     std::unordered_map<size_t, size_t> connected_components_ids;
     size_t cur_comp_id = 0;
     for(const auto cc_id : sample) {
+      // Set the ID if not already done
       if (connected_components_ids.count(cc_id) == 0) {
         connected_components_ids[cc_id] = cur_comp_id++;
       }
     }
     const size_t num_connected_components = connected_components_ids.size();
+    std::vector<size_t> connected_components_sizes(num_connected_components, 0);
+    for(const auto cc_id : sample)  {
+      connected_components_sizes[connected_components_ids[cc_id]]++;
+    }
 
     const auto tid = omp_get_thread_num();
-    auto& cluster_counts = t_cluster_counts[tid];
+    auto& cluster_inner_counts = t_cluster_inner_counts[tid];
+    auto& cluster_outer_counts = t_cluster_outer_counts[tid];
 
-    // A matrix of `num_clusters` x `num_components elements that
+    // A matrix of `num_clusters` x `num_components` elements that
     // contains in element (i,j) the number of elements of cluster i
     // belonging to the connected component j.
     std::vector<std::vector<size_t>> intersection_sizes;
@@ -140,29 +148,55 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
       }
       intersection_sizes.push_back(vec);
     }
-
+    // Populate the intersection counts
     for (size_t i=0; i<n; i++) {
       const size_t cluster_id = cluster_ids[vinfo[i].center()];
       const size_t component_id = connected_components_ids[sample[i]];
       intersection_sizes.at(cluster_id).at(component_id)++;
     }
+
+    
+    // A matrix of `num_clusters` x `num_components` elements that
+    // contains in element (i,j) the number of elements of connected
+    // component j *not* belonging to cluster i.
+    std::vector<std::vector<size_t>> difference_sizes(
+        n_clusters, std::vector<size_t>(num_connected_components, 0ul));
+
+    // Compute the size of the difference as the size of the connected
+    // component minus the size of the intersection
+    for (size_t i=0; i<n_clusters; i++) {
+      for(size_t j=0; j<num_connected_components; j++) {
+        difference_sizes[i][j] = connected_components_sizes[j] - intersection_sizes[i][j];
+      }
+    }
     
     for (size_t cluster_idx=0; cluster_idx<n_clusters; cluster_idx++) {
-      size_t cnt=0;
-      const auto & sizes = intersection_sizes[cluster_idx];
+      size_t inner_cnt=0;
+      size_t outer_cnt=0;
+      const auto & i_sizes = intersection_sizes[cluster_idx];
+      const auto & d_sizes = difference_sizes[cluster_idx];
       // TODO: Apply SIMD reduction
       for (size_t component_idx=0; component_idx<num_connected_components; component_idx++){
-        size_t intersection = sizes[component_idx];
-        cnt += intersection*(intersection-1)/2;
+        size_t intersection = i_sizes[component_idx];
+        size_t difference = d_sizes[component_idx];
+        inner_cnt += intersection*(intersection-1)/2;
+        outer_cnt += intersection*difference;
       }
-      cluster_counts[cluster_idx] += cnt;
+      cluster_inner_counts[cluster_idx] += inner_cnt;
+      cluster_outer_counts[cluster_idx] += outer_cnt;
     }
   }
 
-  double numerator = 0.0;
-  for (const auto & cnts : t_cluster_counts) {
+  double inner_numerator = 0.0;
+  double outer_numerator = 0.0;
+  for (const auto & cnts : t_cluster_inner_counts) {
     for (const size_t cnt : cnts) {
-      numerator += (((double) cnt) / n_samples);
+      inner_numerator += (((double) cnt) / n_samples);
+    }
+  }
+  for (const auto & cnts : t_cluster_outer_counts) {
+    for (const size_t cnt : cnts) {
+      outer_numerator += (((double) cnt) / n_samples);
     }
   }
   std::unordered_map<ugraph_vertex_t, size_t> cluster_sizes;
@@ -174,13 +208,14 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
       cluster_sizes[center]++;
     }
   }
-  double denominator = 0.0;
+  double inner_denominator = 0.0;
   for(const auto & cs : cluster_sizes) {
     size_t size = cs.second;
-    denominator += (size*(size-1))/2.0;
+    inner_denominator += (size*(size-1))/2.0;
   }
+  double outer_denominator = (n*(n-1))/2.0 - inner_denominator;
   
-  return numerator / denominator;
+  return inner_numerator / inner_denominator;
 }
 
 double average_vertex_pairwise_reliability_old(const ugraph_t & graph,
