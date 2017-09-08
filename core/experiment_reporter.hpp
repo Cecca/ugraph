@@ -99,7 +99,17 @@ public:
 
   void save() {
     std::string path = boost::posix_time::to_iso_string(date);
-    path += ".json";
+
+    // This random nonce prevents filename clashes in case of very
+    // fast runs (under a second)
+    std::random_device rd;
+    uint64_t seed = rd();
+    Splitmix64 seeder(seed);
+    Xorshift1024star rnd(seeder.next());
+    std::stringstream nonce;
+    nonce << "-" << std::hex << rnd.next();
+    
+    path += nonce.str() + ".json";
     save(path);
   }
 
