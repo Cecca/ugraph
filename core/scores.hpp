@@ -28,7 +28,10 @@ struct AVPR {
   double outer;
 
   AVPR(): inner(-1), outer(-1) {}
-  AVPR(double inner, double outer): inner(inner), outer(outer) {}
+  AVPR(double inner, double outer): inner(inner), outer(outer) {
+    REQUIRE(inner <= 1.0, "Inner AVPR should be less than 1.0");
+    REQUIRE(outer <= 1.0, "Outer AVPR should be less than 1.0");
+  }
 };
 
 /// Computes the Average Vertex Pairwise Reliability
