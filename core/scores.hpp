@@ -26,10 +26,13 @@ double average_vertex_pairwise_reliability_old(const ugraph_t & graph,
 struct AVPR {
   double inner;
   double outer;
+
+  AVPR(): inner(-1), outer(-1) {}
+  AVPR(double inner, double outer): inner(inner), outer(outer) {}
 };
 
 /// Computes the Average Vertex Pairwise Reliability
-double average_vertex_pairwise_reliability(const ugraph_t & graph,
+AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
             const std::vector<ClusterVertex> & vinfo,
             CCSampler & sampler);
 

@@ -154,9 +154,10 @@ int main(int argc, char *argv[]) {
   }
   if (args.count("with-avpr") == 0) {
     LOG_INFO("Computing AVPR");
-    double avpr = average_vertex_pairwise_reliability(graph, vinfo, sampler);
+    AVPR avpr = average_vertex_pairwise_reliability(graph, vinfo, sampler);
 
-    data["tables"]["scores"][0]["avpr"] = avpr;
+    data["tables"]["scores"][0]["inner-avpr"] = avpr.inner;
+    data["tables"]["scores"][0]["outer-avpr"] = avpr.outer;
   }
 
   if (args.count("odir")) {

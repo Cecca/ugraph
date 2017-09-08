@@ -82,7 +82,7 @@ double average_cluster_reliability(const ugraph_t & graph,
   return acr;
 }
 
-double average_vertex_pairwise_reliability(const ugraph_t & graph,
+AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
             const std::vector<ClusterVertex> & vinfo,
             CCSampler & sampler) {
   // Instead of looking at the connection probabilities of single
@@ -214,8 +214,10 @@ double average_vertex_pairwise_reliability(const ugraph_t & graph,
     inner_denominator += (size*(size-1))/2.0;
   }
   double outer_denominator = (n*(n-1))/2.0 - inner_denominator;
-  
-  return inner_numerator / inner_denominator;
+  AVPR avpr;
+  avpr.inner = inner_numerator / inner_denominator;
+  avpr.outer = outer_numerator / outer_denominator;
+  return avpr;
 }
 
 double average_vertex_pairwise_reliability_old(const ugraph_t & graph,
@@ -278,7 +280,8 @@ void add_scores(const ugraph_t & graph,
   probability_t avg_p = sum_p / boost::num_vertices(graph);
   LOG_INFO("Sum_p " << sum_p << " avg_p " << avg_p);
     
-  double acr=-1, avpr=-1;
+  double acr=-1;
+  AVPR avpr;
   if (with_acr) {
     sampler.min_probability(graph, min_p);
     LOG_INFO("Computing ACR");
@@ -294,11 +297,13 @@ void add_scores(const ugraph_t & graph,
            "\n\t# clusters = " << num_clusters << 
            "\n\tp_min = " << min_p <<
            "\n\taverage p = " << avg_p <<
-           "\n\tavpr      = " << avpr <<
+           "\n\tinner-avpr      = " << avpr.inner <<
+           "\n\touter-avpr      = " << avpr.outer <<
            "\n\tacr   = " << acr);
   EXPERIMENT_APPEND("scores", {{"acr", acr},
                                {"p_min", min_p},
-                               {"avpr", avpr},
+                               {"inner-avpr", avpr.inner},
+                               {"outer-avpr", avpr.outer},
                                {"probabilities sum", sum_p},
                                {"average probability", avg_p},
                                {"num clusters", num_clusters}});
