@@ -164,12 +164,12 @@ int main(int argc, char *argv[]) {
   data["tables"]["scores"][0]["num clusters"] = num_clusters;
   data["tables"]["scores"][0]["p_min"] = min_p;
   data["tables"]["scores"][0]["average probability"] = sum_p / boost::num_vertices(graph);
-  if (args.count("with-acr") == 0) {
+  if (args.count("with-acr") > 0) {
     LOG_INFO("Computing ACR");
     double acr = average_cluster_reliability(graph, clusters, sampler);
     data["tables"]["scores"][0]["acr"] = acr;
   }
-  if (args.count("with-avpr") == 0) {
+  if (args.count("with-avpr") > 0) {
     LOG_INFO("Computing AVPR");
     AVPR avpr = average_vertex_pairwise_reliability(graph, vinfo, sampler);
 
