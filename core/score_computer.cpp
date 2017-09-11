@@ -58,25 +58,40 @@ parse_args(int argc, char** argv)
 std::vector< ClusterVertex > load_clustering(const ugraph_t & graph,
                                              const std::string & path,
                                              CCSampler & sampler) {
+  std::unordered_map<std::string, ugraph_vertex_t> id_map;
+  using namespace boost;
+  BGL_FORALL_VERTICES(v, graph, ugraph_t) {
+    id_map[graph[v].label] = v;
+  }
+  
+  LOG_INFO("Loading json data");
   using json = nlohmann::json;
   std::ifstream input(path);
   json data;
   input >> data;
   input.close();
+  LOG_INFO("Loaded json data");
   auto clustering_table = data["tables"]["clustering"];
   std::unordered_map<ugraph_vertex_t, std::vector<ugraph_vertex_t> > clusters_map;
-  LOG_INFO("Load clustering from file");
-  
+  LOG_INFO("Building cluster map");
+  const size_t num_nodes = clustering_table.size();
+  const size_t one_cent = num_nodes / 100;
+  size_t i=0;
   for (const auto & row : clustering_table) {
+    if (i % (10*one_cent) == 0) {
+      LOG_INFO("Progress: " << (i / one_cent) << "% (" << i << "/" << num_nodes << ")"); 
+    }
+    i++;
     ugraph_vertex_t
-      center = _find_id(graph, row["center label"]),
-      vertex = _find_id(graph, row["label"]);
+      center = id_map[row["center label"]],// _find_id(graph, row["center label"]),
+      vertex = id_map[row["label"]];// _find_id(graph, row["label"]);
     LOG_DEBUG("Loading vertex " << vertex << " assigned to " << center);
     if (clusters_map.count(center) == 0) {
-      clusters_map[center] = std::vector<ugraph_vertex_t>();
+      clusters_map[center] = std::vector<ugraph_vertex_t>(1024);
     }
     clusters_map[center].push_back(vertex);
   }
+  LOG_INFO("Built cluster map");
 
   return build_cluster_vertices(graph, clusters_map, sampler);
 }
@@ -112,12 +127,14 @@ int main(int argc, char *argv[]) {
   LOG_INFO("Running with " << omp_threads << " threads");
 
   std::string clustering_path = args["clustering"].as<std::string>();
-  
+
+  LOG_INFO("Loading json data");
   using json = nlohmann::json;
   std::ifstream input(clustering_path);
   json data;
   input >> data;
   input.close();
+  LOG_INFO("Loaded json data");
   
   std::string graph_path;
   if (args.count("graph")) {

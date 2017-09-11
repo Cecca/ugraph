@@ -7,8 +7,16 @@ std::vector< ClusterVertex > build_cluster_vertices(const ugraph_t & graph,
   std::vector< ClusterVertex > vinfo(boost::num_vertices(graph));
 
   LOG_INFO("Building ClusterVertex");
+
+  const size_t n_clusters = clusters.size();
+  const size_t n_clusters_one_cent = n_clusters / 100;
+  size_t cluster_idx=0;
   
   for (const auto & entry : clusters) {
+    if (cluster_idx % n_clusters_one_cent == 0) {
+      LOG_INFO("  " << (cluster_idx / n_clusters_one_cent) << "%");
+    }
+    cluster_idx++;
     const ugraph_vertex_t center = entry.first;
     auto cluster = entry.second;
     sampler.connection_probabilities(graph, center, cluster, probabilities);
