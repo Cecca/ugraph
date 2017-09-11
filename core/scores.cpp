@@ -119,6 +119,7 @@ AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
   // The samples
   const std::vector<CCSampler::component_vector_t> &samples = sampler.get_samples();
   const size_t n_samples = samples.size();
+  size_t processed_samples = 0;
   
   // For each sample in parallel, accumulate counts
 #pragma omp parallel for
@@ -138,6 +139,13 @@ AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
     for(const auto cc_id : sample)  {
       connected_components_sizes[connected_components_ids[cc_id]]++;
     }
+
+#pragma omp critical
+    {
+      LOG_INFO("Processing sample " << (processed_samples++) << "/" << n_samples <<
+               " (" << n_clusters << " clusters and " << num_connected_components << " connected components");
+    }
+
 
     const auto tid = omp_get_thread_num();
     auto& cluster_inner_counts = t_cluster_inner_counts[tid];
