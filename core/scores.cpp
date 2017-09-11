@@ -159,31 +159,38 @@ AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
     auto& cluster_inner_counts = t_cluster_inner_counts[tid];
     auto& cluster_outer_counts = t_cluster_outer_counts[tid];
 
-    // A matrix of `num_clusters` x `num_components` elements that
+    // A (sparse) matrix of `num_clusters` x `num_components` elements that
     // contains in element (i,j) the number of elements of cluster i
     // belonging to the connected component j.
-    std::vector<std::vector<size_t>> intersection_sizes;
-    for (size_t i=0; i<n_clusters; i++) {
-      std::vector<size_t> vec;
-      for(size_t j=0; j<num_connected_components; j++) {
-        vec.push_back(0);
-      }
-      intersection_sizes.push_back(vec);
-    }
+    std::vector<std::unordered_map<size_t, size_t>> intersection_sizes(n_clusters);
+    // for (size_t i=0; i<n_clusters; i++) {
+    //   std::vector<size_t> vec;
+    //   for(size_t j=0; j<num_connected_components; j++) {
+    //     vec.push_back(0);
+    //   }
+    //   intersection_sizes.push_back(vec);
+    // }
     // Populate the intersection counts
     for (size_t i=0; i<n; i++) {
       const size_t cluster_id = cluster_ids[vinfo[i].center()];
       const size_t component_id = connected_components_ids[sample[i]];
-      intersection_sizes.at(cluster_id).at(component_id)++;
+      if (intersection_sizes.at(cluster_id).count(component_id) == 0) {
+        intersection_sizes[cluster_id][component_id] = 1;
+      } else {
+        intersection_sizes[cluster_id][component_id] += 1;
+      }
     }
     
     for (size_t cluster_idx=0; cluster_idx<n_clusters; cluster_idx++) {
       size_t inner_cnt=0;
       size_t outer_cnt=0;
-      const auto & i_sizes = intersection_sizes[cluster_idx];
+      auto & i_sizes = intersection_sizes[cluster_idx];
       // TODO: Apply SIMD reduction
       for (size_t component_idx=0; component_idx<num_connected_components; component_idx++){
-        size_t intersection = i_sizes[component_idx];
+        size_t intersection = 0;
+        if (i_sizes.count(component_idx) > 0) {
+          intersection = i_sizes[component_idx];
+        }
         size_t difference = connected_components_sizes[component_idx] - intersection;
         inner_cnt += intersection*(intersection-1)/2;
         size_t outer_pairs = intersection*difference;
