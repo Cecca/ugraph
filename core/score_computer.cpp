@@ -140,11 +140,18 @@ int main(int argc, char *argv[]) {
   std::string graph_path;
   if (args.count("graph")) {
     graph_path = args["graph"].as<std::string>();
-  } else {
+  } else if (data["tags"].count("input")) {
+    graph_path = data["tags"]["input"];
+  } else if (data["tags"].count("graph")) {
     graph_path = data["tags"]["graph"];
+  } else {
+    LOG_ERROR("Could not retrieve input graph from clustering file");
+    return -1;
   }
+  LOG_DEBUG("Loading graph from " << graph_path);
   ugraph_t graph;
   read_edge_list(graph, graph_path);
+  LOG_DEBUG("Loaded graph");
 
   double
     epsilon = args["epsilon"].as<double>(),
