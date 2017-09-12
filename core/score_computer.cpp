@@ -164,20 +164,26 @@ int main(int argc, char *argv[]) {
   auto clusters = build_clusters(vinfo);
   LOG_DEBUG("Built clusters");
 
-  LOG_INFO("Computing minimum probability");
-  probability_t min_p = min_probability(vinfo);
-  probability_t sum_p = sum_probability(vinfo);
-  size_t num_clusters = num_centers(vinfo);
-
-  data["tables"]["scores"][0]["num clusters"] = num_clusters;
-  data["tables"]["scores"][0]["p_min"] = min_p;
-  data["tables"]["scores"][0]["average probability"] = sum_p / boost::num_vertices(graph);
-  if (args.count("with-acr") > 0) {
+  if (data["tables"]["scores"][0].count("p_min") == 0) {
+    LOG_INFO("Computing minimum probability");
+    probability_t min_p = min_probability(vinfo);
+    data["tables"]["scores"][0]["p_min"] = min_p;
+  }
+  if (data["tables"]["scores"][0].count("average probability") == 0) {
+    probability_t sum_p = sum_probability(vinfo);
+    data["tables"]["scores"][0]["average probability"] = sum_p / boost::num_vertices(graph);
+  }
+  if (data["tables"]["scores"][0].count("num clusters") == 0) {
+    size_t num_clusters = num_centers(vinfo);
+    data["tables"]["scores"][0]["num clusters"] = num_clusters;
+  }
+  
+  if (data["tables"]["scores"][0].count("acr") == 0 && args.count("with-acr") > 0) {
     LOG_INFO("Computing ACR");
     double acr = average_cluster_reliability(graph, clusters, sampler);
     data["tables"]["scores"][0]["acr"] = acr;
   }
-  if (args.count("with-avpr") > 0) {
+  if (data["tables"]["scores"][0].count("inner-avpr") == 0 && args.count("with-avpr") > 0) {
     LOG_INFO("Computing AVPR");
     AVPR avpr = average_vertex_pairwise_reliability(graph, vinfo, sampler);
 
