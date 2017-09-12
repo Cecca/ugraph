@@ -11,17 +11,21 @@ std::vector< ClusterVertex > build_cluster_vertices(const ugraph_t & graph,
   const size_t n_clusters = clusters.size();
   const size_t n_clusters_one_cent = n_clusters / 100;
   size_t cluster_idx=0;
-  
+
+  LOG_DEBUG("Starting loop over clusters");
   for (const auto & entry : clusters) {
-    if (cluster_idx % n_clusters_one_cent == 0) {
+    if (n_clusters_one_cent != 0 && cluster_idx % n_clusters_one_cent == 0) {
       LOG_INFO("  " << (cluster_idx / n_clusters_one_cent) << "%");
     }
     cluster_idx++;
     const ugraph_vertex_t center = entry.first;
     auto cluster = entry.second;
+    LOG_DEBUG("Looking at probabilities");
     sampler.connection_probabilities(graph, center, cluster, probabilities);
+    LOG_DEBUG("Looked at probabilities");
     for(const ugraph_vertex_t v : cluster) {
       if (v == center) {
+        LOG_DEBUG("Turning " << v << " into a center");
         vinfo[v].make_center(v);
       } else {
         LOG_DEBUG("Cover node " << v << " from " << center << " with p=" << probabilities[v]);
@@ -31,7 +35,6 @@ std::vector< ClusterVertex > build_cluster_vertices(const ugraph_t & graph,
   }
 
   for (size_t i =0; i<vinfo.size(); i++) {
-    //LOG_INFO("Node:" << i << " prob: " << vinfo[i].probability() << " center:" << vinfo[i].center());
     if (!vinfo[i].is_covered()) {
       LOG_INFO("Node " << i << " is uncovered (" << graph[i].label << ")");
     }

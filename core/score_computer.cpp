@@ -87,7 +87,8 @@ std::vector< ClusterVertex > load_clustering(const ugraph_t & graph,
       vertex = id_map[row["label"]];// _find_id(graph, row["label"]);
     LOG_DEBUG("Loading vertex " << vertex << " assigned to " << center);
     if (clusters_map.count(center) == 0) {
-      clusters_map[center] = std::vector<ugraph_vertex_t>(1024);
+      clusters_map[center] = std::vector<ugraph_vertex_t>();
+      clusters_map.reserve(1024);
     }
     clusters_map[center].push_back(vertex);
   }
