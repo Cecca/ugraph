@@ -27,9 +27,12 @@ def build_pairs(data):
               _num_distinct_proteins(clusters), "distinct proteins",
               file=sys.stderr)
         pairs = set()
+        cnt = 0
         for c in clusters:
             for u, v in combinations(c, 2):
+                cnt += 1
                 pairs.add(tuple(sorted([u, v])))
+        print("Counted", cnt, "pairs, returning", len(pairs))
         return pairs
     if 'clustering' in data:
         table = data['clustering']

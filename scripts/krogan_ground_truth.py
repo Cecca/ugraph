@@ -26,6 +26,12 @@ def build_clusters(data):
                     clusters_map[cid] = {protein}
                 else:
                     clusters_map[cid].add(protein)
+    num_pairs = 0
+    for k, v in clusters_map.items():
+        local_pairs = len(v)*(len(v)-1) / 2
+        print("Cluster `",k, "` has", local_pairs, "pairs of proteins")
+        num_pairs += local_pairs
+    print(num_pairs)
     return list(sorted(clusters_map.values(), key=len, reverse=True))
     
 

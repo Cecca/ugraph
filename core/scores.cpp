@@ -151,13 +151,6 @@ AVPR average_vertex_pairwise_reliability(const ugraph_t & graph,
       connected_components_sizes[connected_components_ids[cc_id]]++;
     }
 
-#pragma omp critical
-    {
-      LOG_INFO("Processing sample " << (processed_samples++) << "/" << n_samples <<
-               " (" << n_clusters << " clusters and " << num_connected_components << " connected components");
-    }
-
-
     const auto tid = omp_get_thread_num();
     auto& cluster_inner_counts = t_cluster_inner_counts[tid];
     auto& cluster_outer_counts = t_cluster_outer_counts[tid];
