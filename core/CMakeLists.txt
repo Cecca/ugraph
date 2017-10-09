@@ -70,3 +70,13 @@ target_link_libraries(ugraph-scores
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${Boost_IOSTREAMS_LIBRARY}
   ${BZIP2_LIBRARIES})
+
+add_executable(ugraph-avg-prob avg-prob.cpp)
+target_link_libraries(ugraph-avg-prob
+  ugraph
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_DATE_TIME_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_IOSTREAMS_LIBRARY}
+  ${BZIP2_LIBRARIES})
