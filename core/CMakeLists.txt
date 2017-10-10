@@ -17,8 +17,9 @@ set( HEADER_FILES
   bfs_sampler.hpp
   cluster_vertex.hpp
   guesser.hpp
-  sequential_clustering.hpp
-  concurrent_clustering.hpp
+  mcpc.hpp
+  acpc.hpp
+  counts_cache.hpp
 )
 
 set( LIB_FILES
@@ -33,30 +34,49 @@ set( LIB_FILES
 )
 add_library(ugraph STATIC ${HEADER_FILES} ${LIB_FILES} )
 
-add_executable(scratch scratch.cpp)
-target_link_libraries(scratch
+add_executable(ugraph-mcpc mcpc-run.cpp)
+target_link_libraries(ugraph-mcpc
   ugraph
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_IOSTREAMS_LIBRARY}
+  ${BZIP2_LIBRARIES})
 
-add_executable(ugraph-sc sequential.cpp)
-target_link_libraries(ugraph-sc
-  ugraph
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY})
-
-add_executable(ugraph-cc concurrent.cpp)
-target_link_libraries(ugraph-cc
-  ugraph
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY})
+add_executable(ugraph-acpc acpc-run.cpp)
+target_link_libraries(ugraph-acpc
+        ugraph
+        ${Boost_SYSTEM_LIBRARY}
+        ${Boost_DATE_TIME_LIBRARY}
+        ${Boost_PROGRAM_OPTIONS_LIBRARY}
+        ${Boost_IOSTREAMS_LIBRARY}
+        ${BZIP2_LIBRARIES})
+      
+add_executable(ugraph-gmm gmm.cpp)
+target_link_libraries(ugraph-gmm
+        ugraph
+        ${Boost_SYSTEM_LIBRARY}
+        ${Boost_DATE_TIME_LIBRARY}
+        ${Boost_PROGRAM_OPTIONS_LIBRARY}
+        ${Boost_IOSTREAMS_LIBRARY}
+        ${BZIP2_LIBRARIES})
 
 add_executable(ugraph-scores score_computer.cpp)
 target_link_libraries(ugraph-scores
   ugraph
   ${Boost_SYSTEM_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_IOSTREAMS_LIBRARY}
+  ${BZIP2_LIBRARIES})
+
+add_executable(ugraph-avg-prob avg-prob.cpp)
+target_link_libraries(ugraph-avg-prob
+  ugraph
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_DATE_TIME_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_IOSTREAMS_LIBRARY}
+  ${BZIP2_LIBRARIES})

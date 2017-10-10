@@ -7,6 +7,7 @@
 #include "types.hpp"
 #include "rand.hpp"
 #include "logging.hpp"
+#include "counts_cache.hpp"
 
 struct CCSamplerThreadState {
   typedef std::vector< int > component_vector_t;
@@ -14,11 +15,15 @@ struct CCSamplerThreadState {
   typedef std::vector< bool > edge_sample_t;
 
   CCSamplerThreadState(const ugraph_t &graph, Xorshift1024star randgen)
-      : stack(stack_t(boost::num_vertices(graph))),
-        edge_sample(edge_sample_t(boost::num_edges(graph))),
-        connection_counts(std::vector<size_t>(boost::num_vertices(graph))),
-        rnd(randgen){};
+    : ranks(std::vector<size_t>(boost::num_vertices(graph))),
+      stack(stack_t(boost::num_vertices(graph))),
+      edge_sample(edge_sample_t(boost::num_edges(graph))),
+      connection_counts(std::vector<size_t>(boost::num_vertices(graph))),
+      rnd(randgen){};
 
+  // Ranks data structure for union find
+  std::vector< size_t > ranks;
+  
   // Stacks for dfs, one for each thread
   stack_t stack;
 
@@ -71,10 +76,19 @@ public:
     }
   }
   
+  const std::vector< component_vector_t > & get_samples() const {
+    return m_samples;
+  }
+
   size_t connection_probabilities(const ugraph_t & graph,
                                   const ugraph_vertex_t from,
                                   std::vector< probability_t > & probabilities);
 
+  size_t connection_probabilities_cache(const ugraph_t & graph,
+                                        const ugraph_vertex_t from,
+                                        ConnectionCountsCache & cccache,
+                                        std::vector< probability_t > & probabilities);
+  
   size_t connection_probabilities(const ugraph_t & graph,
                                   const ugraph_vertex_t from,
                                   const std::vector< ugraph_vertex_t > & targets,

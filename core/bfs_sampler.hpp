@@ -8,6 +8,7 @@
 #include "prelude.hpp"
 #include "rand.hpp"
 #include "types.hpp"
+#include "counts_cache.hpp"
 
 template <typename T> class FixedCapacityQueue {
 
@@ -112,7 +113,14 @@ public:
                                   const ugraph_vertex_t from,
                                   const std::vector< ugraph_vertex_t > & targets,
                                   std::vector< probability_t > & probabilities);
-  
+
+  size_t connection_probabilities_cache(const ugraph_t & graph,
+                                        const ugraph_vertex_t from,
+                                        ConnectionCountsCache & cccache,
+                                        std::vector< probability_t > & probabilities){
+    // FIXME specialize
+    connection_probabilities(graph, from, probabilities);
+  }
   /** The probability that a given set of nodes is connected */
   probability_t
   connection_probability(const ugraph_t &graph,

@@ -20,6 +20,8 @@ namespace logging {
   void debug(std::string & msg);
   void trace(std::string & msg);
 
+  std::string vm_size();
+  
 }
 
 
@@ -61,3 +63,18 @@ namespace logging {
     std::string msg = s.str(); \
     logging::error(msg);\
   } while (false);
+
+#define PRINT_CLUSTERING(clustering)                                           \
+  printf("[");                                                                 \
+  for (ugraph_vertex_t ___j = 0; ___j < n; ___j++) {                           \
+    if (clustering[___j].is_covered()) {                                       \
+      printf("+");                                                             \
+    } else {                                                                   \
+      printf("-");                                                             \
+    }                                                                          \
+  }                                                                            \
+  printf("]\n");                                                               \
+
+
+
+// End of logging.hpp

@@ -8,7 +8,7 @@ int main(int argc, char**argv) {
 
   LOG_INFO("Target is " << target);
   
-  Guesser g(0.01, 0.001);
+  ExponentialGuesser g(0.01, 0.001);
 
   probability_t guess;
   while(!g.stop()) {

@@ -4,6 +4,8 @@
 #include <fstream>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/variant.hpp>
+#include <boost/iostreams/filter/bzip2.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 #include <map>
 #include <exception>
 
@@ -24,6 +26,12 @@ class ExperimentReporter {
 public:
   ExperimentReporter() : date(boost::posix_time::second_clock::local_time()) {}
 
+public:
+  static ExperimentReporter& get_instance() {
+    static ExperimentReporter instance;
+    return instance;
+  }
+  
   void tag(const std::string &key, const element_value_t &val) {
     tags[key] = val;
   }
@@ -81,15 +89,27 @@ public:
   }
 
   void save(const std::string &path) {
-    std::ofstream out;
-    out.open(path);
+    std::ofstream out_stream;
+    out_stream.open(path + ".bz2");
+    boost::iostreams::filtering_ostream out;
+    out.push(boost::iostreams::bzip2_compressor());
+    out.push(out_stream);
     save(out);
-    out.close();
   }
 
   void save() {
     std::string path = boost::posix_time::to_iso_string(date);
-    path += ".json";
+
+    // This random nonce prevents filename clashes in case of very
+    // fast runs (under a second)
+    std::random_device rd;
+    uint64_t seed = rd();
+    Splitmix64 seeder(seed);
+    Xorshift1024star rnd(seeder.next());
+    std::stringstream nonce;
+    nonce << "-" << std::hex << rnd.next();
+    
+    path += nonce.str() + ".json";
     save(path);
   }
 
@@ -99,3 +119,12 @@ private:
   std::map<std::string, table_t> tables;
 };
 
+
+#define EXPERIMENT_APPEND(table, ...)                           \
+  ExperimentReporter::get_instance().append(table, __VA_ARGS__)
+
+#define EXPERIMENT_TAG(key, val)                        \
+  ExperimentReporter::get_instance().tag(key, val)
+
+#define EXPERIMENT_SAVE()                       \
+  ExperimentReporter::get_instance().save()

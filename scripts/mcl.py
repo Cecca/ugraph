@@ -9,6 +9,7 @@ import shutil
 import datetime
 import json
 import time
+import multiprocessing
 
 
 def abc_to_matrix(abc_path):
@@ -21,8 +22,13 @@ def abc_to_matrix(abc_path):
 
 
 def run_mcl(mcl_path, inflation):
+    te = multiprocessing.cpu_count()
+    print("Running with", te, "threads")
     result_name = "result"
-    subprocess.call(["mcl", mcl_path, "-I", str(inflation), "--write-limit",
+    subprocess.call(["mcl", mcl_path,
+                     "-I", str(inflation),
+                     "-te", str(te),
+                     "--write-limit",
                      "-o", result_name])
     return result_name, result_name + "-limit"
 
@@ -108,7 +114,8 @@ def mcl(abc_path, inflation):
         json.dump(jobj, fh)
     print("Wrote JSON result to", fname)
     subprocess.call(["ugraph-scores",
-                     "--epsilon", "1"
+                     "--epsilon", "1",
+                     "--with-avpr",
                      "--graph", abc_path,
                      "--clustering", fname])
     shutil.rmtree(workdir)
