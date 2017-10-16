@@ -1,10 +1,7 @@
 # Uncertain graphs clustering
 
-This repository contains code for the paper
-[_Clustering Uncertain Graphs_](https://arxiv.org/abs/1612.06675).
-Specifically, the code in this repository implements
-[Algorithm 4](https://arxiv.org/pdf/1612.06675v1.pdf#algocf.4) and
-[Algorithm 6](https://arxiv.org/pdf/1612.06675v1.pdf#algocf.6).
+This repository contains code and data used in the paper
+_Clustering Uncertain Graphs_.
 
 ## Building the code
 
@@ -14,16 +11,16 @@ To build the code you need
  - Make
  - [peru](https://github.com/buildinspace/peru) to install some
    dependencies
- - OpenMP 
- - [Boost](http://www.boost.org/) >= 1.58
+ - OpenMP
+ - [Boost](http://www.boost.org/) >= 1.58 with the following components
    - graph
    - system
    - filesystem
    - date_time
    - program_options
 
-Then, fromthe root directory of the repository, the following sequence
-of commands will build the software
+From the root directory of the repository, run the following sequence
+of commands to build the software
 
 ```bash
 peru sync                             # get the dependencies
@@ -35,10 +32,15 @@ make                                  # actually compile the code
 
 At this point you should have the following binaries
 
- - `build/core/ugraph-sc`: implementation of the sequential cluster
-   growing strategy of [Algorithm 4](https://arxiv.org/pdf/1612.06675v1.pdf#algocf.4)
- - `build/core/ugraph-cc`: implementation of the concurrent cluster
-   growing strategy of [Algorithm 6](https://arxiv.org/pdf/1612.06675v1.pdf#algocf.6)
+ - `build/core/ugraph-mcpc`: implementationof the MCP clustering
+   algorithm
+ - `build/core/ugraph-acpc`: implementation of the ACP clustering
+   algorithm
+ - `build/core/ugraph-gmm`: implementation of the classic GMM
+   algorithm, adapted to work with probabilities, to be used as a
+   baseline.
+ - `build/core/ugraph-scores`: executable to compute scores given
+   a clustering
 
 ## Data format
 
@@ -54,35 +56,14 @@ example
 1 2 0.13
 ```
 
-## Usage
+## Reproducing the results of the paper
 
-### Sequential clustering algorithm
+The directory `Reproducibility` contains instructions and data to
+reproduce the experimental results described in the paper.
 
-Issuing `ugraph-sc --help` prints a help message to the console. A
-typical invocation looks like the following:
+## Result files
 
-```
-ugraph-sc --graph path/to/graph --target 256
-```
-
-Where `--graph` specifies the path to the graph file, and `--target`
-is the number of desired clusters.
-
-### Parallel clustering algorithm
-
-The command `ugraph-cc --help` prints a help message to the
-console. Typically, this command is invoked as follows
-
-```
-ugraph-cc --graph path/to/graph --batch 256
-```
-
-where `--graph` allows to set the input file, and `--batch` is the
-number of centers added (on average) in each phase.
-
-### Result files
-
-Both programs produce as a result a json file containing a JSON object
+All programs produce as a result a compressed json file containing a JSON object
 with the following structure.
 
  - an object `"tags"` listing the configuration of the run, from the
@@ -103,3 +84,8 @@ with the following structure.
        between the node and its cluster center
        
 These files are suitable to be further processed with software such as [pandas](http://pandas.pydata.org/).
+
+The `scripts/mcl.py` script is a wrapper around the
+[MCL](https://micans.org/mcl/) executable that presents the
+clusterings computed by MCL in this JSON format, thus allowing uniform
+analysis.
