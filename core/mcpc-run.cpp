@@ -125,7 +125,7 @@ int main(int argc, char**argv) {
   EXPERIMENT_TAG("delta", delta);
   EXPERIMENT_TAG("rate", rate);
   EXPERIMENT_TAG("p_low", p_low);
-  EXPERIMENT_TAG("seed", seed);
+  EXPERIMENT_TAG("seed", (size_t) seed);
   EXPERIMENT_TAG("k", k);
   EXPERIMENT_TAG("slack", slack);
   EXPERIMENT_TAG("git-revision", std::string(g_GIT_SHA1));

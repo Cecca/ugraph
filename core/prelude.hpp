@@ -17,6 +17,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <random>
 #include <sstream>
 #include <iostream>
 #include <fstream>
