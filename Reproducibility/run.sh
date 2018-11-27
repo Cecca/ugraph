@@ -1,6 +1,10 @@
 #!/bin/bash
 
+# exit when any command fails
+set -e
+
 ## Test python installation
+#
 python -c 'import seaborn; import pandas' || {
   echo "Your Python installation is missing some required packages."
   echo "The following are required"
@@ -16,6 +20,26 @@ python -c 'import seaborn; import pandas' || {
   exit 1
 }
 
+## Test MCL installation
+#
+MCL_PREFIX_DIR=$(pwd)/mcl-software
+PATH=$PATH:$MCL_PREFIX_DIR/bin
+echo "Testing MCL installation"
+mcl --version || {
+  echo "MCL is not installed, downloading and installing it"
+  mkdir $MCL_PREFIX_DIR
+  pushd $MCL_PREFIX_DIR
+  echo "Downloading MCL"
+  curl -O https://micans.org/mcl/src/mcl-14-137.tar.gz
+  tar xzf mcl-14-137.tar.gz 
+  pushd mcl-14-137 
+  echo "Building MCL"
+  ./configure --prefix=$MCL_PREFIX_DIR >> mcl-build.log
+  make install >> mcl-build.log
+  echo "Done"
+  popd
+  popd
+}
 
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATH=$PATH:$BASEDIR/../build/core:$BASEDIR/../scripts
