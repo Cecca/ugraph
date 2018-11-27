@@ -89,6 +89,7 @@ function figures () {
   do
       for RUN in $(seq $NUM_RUNS)
       do
+          echo "Running algorithms for target $TARGET"
           ugraph-gmm --graph $DATASET --target $TARGET --with-avpr
           ugraph-mcpc --graph $DATASET --target $TARGET --rate 0.1 --with-avpr
           ugraph-acpc --graph $DATASET --target $TARGET --rate 0.1 --with-avpr

@@ -13,16 +13,23 @@ std::string logging::vm_size() {
   std::vector<std::string> tokens;
   boost::split(tokens, line, boost::is_space());
   size_t ntok = tokens.size();
-  int num_kb = stoi(tokens[ntok - 2]);
-  std::stringstream sstr;
-  if (num_kb > 1048576) {
-    sstr << std::setprecision(3) << (num_kb / 1048576.0) << " Gb";
-  } else if (num_kb > 1024) {
-    sstr << std::setprecision(3) << (num_kb / 1024.0) << " Mb";
-  } else {
-    sstr << num_kb << " Kb";
+  if (ntok < 2) {
+    return "xxx Kb";
   }
-  return sstr.str();
+  try {
+    int num_kb = stoi(tokens[ntok - 2]);
+    std::stringstream sstr;
+    if (num_kb > 1048576) {
+      sstr << std::setprecision(3) << (num_kb / 1048576.0) << " Gb";
+    } else if (num_kb > 1024) {
+      sstr << std::setprecision(3) << (num_kb / 1024.0) << " Mb";
+    } else {
+      sstr << num_kb << " Kb";
+    }
+    return sstr.str();
+  } catch (const std::invalid_argument& e) {
+    return "xxx Kb";
+  }
 }  
 
 logging::Level log_level = logging::Level::Info;
@@ -48,7 +55,7 @@ void logging::debug(std::string & msg) {
 void logging::info(std::string & msg) {
   if (log_level <= logging::Level::Info){
     std::cerr << termcolor::green << "* " << termcolor::reset
-              << "[" << vm_size() << "] "
+              /* << "[" << vm_size() << "] " */
               << msg
               << std::endl;
   }
