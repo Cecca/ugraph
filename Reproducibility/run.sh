@@ -75,11 +75,11 @@ function figures () {
       done
   done
   
-  for INFLATION in 1.15 1.2 1.3
-  do
-      mcl.py -I $INFLATION $BASEDIR/Data/dblp/dblp-vldb-publication.txt
-  done
-  
+  # for INFLATION in 1.15 1.2 1.3
+  # do
+  #     mcl.py -I $INFLATION $BASEDIR/Data/dblp/dblp-vldb-publication.txt
+  # done
+
   cd ..
   
   ## Run other algorithms
@@ -118,16 +118,16 @@ function figures () {
       done
   done
   
-  DATASET=$BASEDIR/Data/dblp/dblp-vldb-publication.txt
-  for TARGET in 77 289 517
-  do
-      for RUN in $(seq $NUM_RUNS)
-      do
-          ugraph-gmm --graph $DATASET --target $TARGET --with-avpr
-          ugraph-mcpc --graph $DATASET --target $TARGET --rate 0.1 --with-avpr
-          ugraph-acpc --graph $DATASET --target $TARGET --rate 0.1 --with-avpr
-      done
-  done
+  # DATASET=$BASEDIR/Data/dblp/dblp-vldb-publication.txt
+  # for TARGET in 77 289 517
+  # do
+  #     for RUN in $(seq $NUM_RUNS)
+  #     do
+  #         ugraph-gmm --graph $DATASET --target $TARGET --with-avpr
+  #         ugraph-mcpc --graph $DATASET --target $TARGET --rate 0.1 --with-avpr
+  #         ugraph-acpc --graph $DATASET --target $TARGET --rate 0.1 --with-avpr
+  #     done
+  # done
   
   cd ..
 

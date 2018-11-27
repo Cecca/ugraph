@@ -82,7 +82,9 @@ def normalize_algorithm(table):
 @experiment.cached_table("mcl-scores", MCL_FILES)
 def load_mcl():
     table = experiment.load_table(MCL_FILES, "scores")
+    print("loaded scores")
     perf = experiment.load_table(MCL_FILES, "performance")[["time"]]
+    print("loaded time")
     table = table.join(perf)
     table["input"] = table["graph"]
     table["k"] = table["num clusters"]
@@ -148,6 +150,9 @@ def plot(table, measure, algorithms, sharey=True, exp=False, outname=None):
         max_height = table.groupby(['k', 'algorithm', 'input']).mean()[measure].max()
     for dataset, ax in zip(datasets, axs):
         plotdata = table[table["input"] == dataset]
+        if plotdata.empty:
+            print("Empty dataframe for", dataset, ", skipping")
+            continue
         sns.barplot(data=plotdata,
                     x="k", y=measure, hue="algorithm",
                     hue_order=algorithms,
@@ -334,6 +339,9 @@ def scalability_t(table, algorithms):
     
     plt.subplots(figsize=(3.48761, 1.5))
     
+    if table.empty:
+        print("Empty table in scalability plot")
+        return
     ax = sns.pointplot(x='k', y='time', hue='algorithm',
                        data=table,
                        ci=None,
