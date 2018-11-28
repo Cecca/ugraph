@@ -1,0 +1,4 @@
+pandas==0.19.2
+seaborn==0.8
+networkx==2.0.0
+

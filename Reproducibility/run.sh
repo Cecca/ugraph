@@ -5,7 +5,7 @@ set -e
 
 ## Test python installation
 #
-python -c 'import seaborn; import pandas' || {
+python3 -c 'import seaborn; import pandas' || {
   echo "Your Python installation is missing some required packages."
   echo "The following are required"
   echo ""
@@ -13,7 +13,7 @@ python -c 'import seaborn; import pandas' || {
   echo "  pandas"
   echo ""
   echo "If you are using the conda distribution, you can setup the exact same"
-  echo "python environment used in the paper with the file `conda-environment.yml`"
+  echo "python environment used in the paper with the file 'conda-environment.yml'"
   echo ""
   echo "Otherwise, just install the missing packages using your distribution's"
   echo "package manager or pip"
@@ -43,7 +43,7 @@ mcl --version || {
 
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATH=$PATH:$BASEDIR/../build/core:$BASEDIR/../scripts
-NUM_RUNS=1
+NUM_RUNS=10
 
 if [[ ! -f $BASEDIR/Data/dblp/dblp-vldb-publication.txt ]]
 then
