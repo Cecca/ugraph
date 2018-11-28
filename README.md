@@ -9,8 +9,6 @@ To build the code you need
 
  - CMake >= 3.0
  - Make
- - [peru](https://github.com/buildinspace/peru) to install some
-   dependencies
  - OpenMP
  - [Boost](http://www.boost.org/) >= 1.58 with the following components
    - graph
@@ -23,7 +21,6 @@ From the root directory of the repository, run the following sequence
 of commands to build the software
 
 ```bash
-peru sync                             # get the dependencies
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..   # configure with all optimizations enabled 
