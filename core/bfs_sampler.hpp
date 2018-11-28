@@ -119,7 +119,7 @@ public:
                                         ConnectionCountsCache & cccache,
                                         std::vector< probability_t > & probabilities){
     // FIXME specialize
-    connection_probabilities(graph, from, probabilities);
+    return connection_probabilities(graph, from, probabilities);
   }
   /** The probability that a given set of nodes is connected */
   probability_t
