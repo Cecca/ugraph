@@ -75,14 +75,14 @@ def cached_table(name, input_glob):
             else:
                 modified_p = True
             if modified_p:
-                print("Inputs are newer than the cache file", cache_file)
+                # print("Inputs are newer than the cache file", cache_file)
                 table = func(*args, **kwargs)
                 if not isinstance(table, (pd.DataFrame, pd.Series)):
                     raise TypeError("Function should return a DataFrame of Series")
                 table.to_msgpack(cache_file)
                 return table
             else:
-                print("Found cached table in file", cache_file)
+                # print("Found cached table in file", cache_file)
                 table = pd.read_msgpack(cache_file)
                 return table
         return wrapper
