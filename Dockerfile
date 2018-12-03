@@ -6,8 +6,10 @@ WORKDIR /reproducibility
 # Copy the directory contents into the container 
 COPY . /reproducibility
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install any needed packages specified in requirements.txt
-RUN apt-get update && apt-get -y install cmake g++ python3-pip libbz2-dev libboost-all-dev wget bash \
+RUN apt-get update && apt-get -y install dvipng texlive-latex-base texlive-latex-extra texlive-fonts-recommended cmake g++ python3-pip libbz2-dev libboost-all-dev wget bash \
   && pip3 install --trusted-host pypi.python.org -r requirements.txt
 
 # Compile the software
