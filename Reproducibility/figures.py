@@ -18,7 +18,8 @@ REPLACEMENTS = {
         'gmm': r"\textsc{gmm}",
         'mcl': r"\textsc{mcl}",
         'k-center': r"\textsc{mcp}",
-        'k-median': r"\textsc{acp}"
+        'k-median': r"\textsc{acp}",
+        'k-median-2': r"\textsc{acp}"
     },
     'input': {
         re.compile("collins.*"): 'Collins',
