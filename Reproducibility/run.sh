@@ -119,7 +119,7 @@ function figures () {
   done
   
   DATASET=$BASEDIR/Data/dblp/dblp-vldb-publication.txt
-  for TARGET in 77 289 517
+  for TARGET in 1818 5274 15576
   do
       for RUN in $(seq $NUM_RUNS)
       do
