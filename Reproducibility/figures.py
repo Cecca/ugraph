@@ -389,4 +389,4 @@ if __name__ == '__main__':
 
     analysis(table)
     rc('legend', frameon=True)
-    scalability_t(table, [A['k-center'], A['mcl']])
+    # scalability_t(table, [A['k-center'], A['mcl']])

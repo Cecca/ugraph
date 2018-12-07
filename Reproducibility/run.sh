@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This variable controls the number of runs of each experiment
+NUM_RUNS=100
+NUM_RUNS_DBLP=100
+
 # exit when any command fails
 set -e
 
@@ -43,7 +47,6 @@ mcl --version || {
 
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATH=$PATH:$BASEDIR/../build/core:$BASEDIR/../scripts
-NUM_RUNS=10
 
 if [[ ! -f $BASEDIR/Data/dblp/dblp-vldb-publication.txt ]]
 then
@@ -121,7 +124,7 @@ function figures () {
   DATASET=$BASEDIR/Data/dblp/dblp-vldb-publication.txt
   for TARGET in 1818 5274 15576
   do
-      for RUN in $(seq $NUM_RUNS)
+      for RUN in $(seq $NUM_RUNS_DBLP)
       do
           ugraph-gmm --graph $DATASET --target $TARGET --with-avpr
           ugraph-mcpc --graph $DATASET --target $TARGET --rate 0.1 --with-avpr
