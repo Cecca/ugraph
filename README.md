@@ -1,7 +1,15 @@
 # Uncertain graphs clustering
 
 This repository contains code and data used in the paper
-_Clustering Uncertain Graphs_.
+[_Clustering Uncertain Graphs_](http://www.vldb.org/pvldb/vol11/p472-ceccarello.pdf).
+
+**Contents**
+
+* [Building the code](#building-the-code)
+* [Data format](#data-format)
+* [Reproducing the results of the paper](#reproducing-the-results-of-the-paper)
+* [Result files](#result-files)
+* [Citing the work](#citing-the-work)
 
 ## Building the code
 
@@ -55,8 +63,31 @@ example
 
 ## Reproducing the results of the paper
 
+**TL;DR**: run the script `run-docker.sh`
+
 The directory `Reproducibility` contains instructions and data to
 reproduce the experimental results described in the paper.
+
+To simplify bulding and running the code on several platforms, a `Dockerfile`
+configuration for building a [`docker`](https://www.docker.com/) image is
+provided. If you already have `docker`, then running the `run-docker.sh` script
+will perform the following actions:
+
+- Build a docker image containing the compiled code and all necessary utilities
+  to run experiments and plot figures
+- Run the docker image, which will execute the script `Reproducibility/run.sh`
+- Copy the resulting files in the newly created directory `reproducibility-results`
+
+In the directory `reproducibility-results/imgs` you will find three PDF files,
+named `figure-1.pdf`,  `figure-2.pdf`, and `figure-3.pdf`, each corresponding
+to a figure in the paper.
+
+The last console output of the execution will be Table 2 of the paper.
+
+The execution of all the tests will take a long time, so run it on a machine
+that can stay dedicated to the task for around one day. If you prefer, you can
+change the number of times each experiment is run by changing the first couple
+of lines of the script `Reproducibility/run.sh`.
 
 ## Result files
 
@@ -86,3 +117,29 @@ The `scripts/mcl.py` script is a wrapper around the
 [MCL](https://micans.org/mcl/) executable that presents the
 clusterings computed by MCL in this JSON format, thus allowing uniform
 analysis.
+
+## Citing the work
+
+If you find this software useful, please acknowledge its usage by citing 
+
+> Matteo Ceccarello, Carlo Fantozzi, Andrea Pietracaprina, Geppino Pucci, Fabio Vandin. 
+> _Clustering Uncertain Graphs_.
+> PVLDB, 4(11): 472-44, 2017. DOI: 10.1145/3164135.3164143
+
+```
+@article{DBLP:journals/pvldb/CeccarelloFPPV17,
+  author    = {Matteo Ceccarello and
+               Carlo Fantozzi and
+               Andrea Pietracaprina and
+               Geppino Pucci and
+               Fabio Vandin},
+  title     = {Clustering Uncertain Graphs},
+  journal   = {{PVLDB}},
+  volume    = {11},
+  number    = {4},
+  pages     = {472--484},
+  year      = {2017},
+  url       = {http://www.vldb.org/pvldb/vol11/p472-ceccarello.pdf},
+  biburl    = {https://dblp.org/rec/bib/journals/pvldb/CeccarelloFPPV17},
+}
+```
