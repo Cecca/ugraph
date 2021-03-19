@@ -10,7 +10,7 @@ matplotlib==3.3.3
 networkx==2.0
 numpy==1.17.0
 pandas==0.19.2
-Pillow==8.0.1
+Pillow==8.1.1
 pycrypto==2.6.1
 pygobject==3.26.1
 pyparsing==2.4.7
